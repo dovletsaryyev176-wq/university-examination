@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="main-card shadow-sm p-4 bg-white rounded">
+            <h3 class="mb-4">{{ 'Редактировать' if subject else 'Новый' }} предмет</h3>
+            <form method="POST">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Наименование предмета</label>
+                    <input type="text" name="name" class="form-control form-control-lg"
+                        value="{{ subject.name if subject else '' }}" placeholder="Введите название" required autofocus>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('subjects.index') }}" class="btn btn-link text-secondary">Отмена</a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
