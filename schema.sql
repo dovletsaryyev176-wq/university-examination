@@ -10,3 +10,24 @@ CREATE TABLE IF NOT EXISTS subjects (
     name TEXT NOT NULL UNIQUE,
     is_active INTEGER DEFAULT 1
 );
+
+-- Вопросы (CRUD без удаления; только блокировка/разблокировка via is_active)
+CREATE TABLE IF NOT EXISTS questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subject_id INTEGER NOT NULL,
+    question_text TEXT,
+    question_image TEXT,
+    correct_option TEXT NOT NULL CHECK (correct_option IN ('a', 'b', 'c', 'd', 'e')),
+    is_active INTEGER DEFAULT 1,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id)
+);
+
+-- Варианты ответов для вопроса: A/B/C/D/E. У каждого варианта может быть текст и/или картинка.
+CREATE TABLE IF NOT EXISTS question_options (
+    question_id INTEGER NOT NULL,
+    option_key TEXT NOT NULL CHECK (option_key IN ('a', 'b', 'c', 'd', 'e')),
+    option_text TEXT,
+    option_image TEXT,
+    PRIMARY KEY (question_id, option_key),
+    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+);

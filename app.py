@@ -7,6 +7,7 @@ from routes.users import users_bp
 from flask import redirect, url_for
 from flask_login import current_user
 from routes.subjects import subjects_bp
+from routes.questions import questions_bp
 
 
 
@@ -46,6 +47,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp, url_prefix='/users')
     app.register_blueprint(subjects_bp, url_prefix='/subjects')
+    app.register_blueprint(questions_bp, url_prefix='/questions')
 
 
     @app.route('/')
