@@ -11,6 +11,8 @@ from database import get_db_connection
 questions_bp = Blueprint('questions', __name__)
 
 OPTION_KEYS = ('a', 'b', 'c', 'd', 'e')
+DIFFICULTY_CHOICES = ('easy', 'hard')
+DIFFICULTY_LABELS = {'easy': 'Лёгкий', 'hard': 'Сложный'}
 
 
 def _project_root() -> str:
@@ -100,14 +102,15 @@ def index():
             s.name AS subject_name,
             q.question_text,
             q.question_image,
-            q.correct_option
+            q.correct_option,
+            q.difficulty
         FROM questions q
         JOIN subjects s ON q.subject_id = s.id
         ORDER BY s.name ASC, q.id DESC
         '''
     ).fetchall()
     db.close()
-    return render_template('questions/list.html', questions=rows)
+    return render_template('questions/list.html', questions=rows, difficulty_labels=DIFFICULTY_LABELS)
 
 
 @questions_bp.route('/create', methods=['GET', 'POST'])
@@ -134,13 +137,18 @@ def create():
                 question=None,
                 options={k: {'option_key': k, 'option_text': None, 'option_image': None} for k in OPTION_KEYS},
                 subjects=subjects,
-                draft={'question_text': request.form.get('question_text', ''), 'correct_option': request.form.get('correct_option')},
+                draft={'question_text': request.form.get('question_text', ''), 'correct_option': request.form.get('correct_option'), 'difficulty': request.form.get('difficulty', 'easy')},
                 current_subject_id=subject_id,
                 option_keys=OPTION_KEYS,
+                difficulty_choices=DIFFICULTY_CHOICES,
+                difficulty_labels=DIFFICULTY_LABELS,
             )
 
         question_text = request.form.get('question_text', '').strip() or None
         correct_option = request.form.get('correct_option')
+        difficulty = request.form.get('difficulty', 'easy')
+        if difficulty not in DIFFICULTY_CHOICES:
+            difficulty = 'easy'
 
         if correct_option not in OPTION_KEYS:
             db.close()
@@ -151,9 +159,11 @@ def create():
                 question=None,
                 options={k: {'option_key': k, 'option_text': request.form.get(f'option_{k}_text', '').strip() or None, 'option_image': None} for k in OPTION_KEYS},
                 subjects=subjects,
-                draft={'question_text': question_text or '', 'correct_option': correct_option},
+                draft={'question_text': question_text or '', 'correct_option': correct_option, 'difficulty': difficulty},
                 current_subject_id=subject_id,
                 option_keys=OPTION_KEYS,
+                difficulty_choices=DIFFICULTY_CHOICES,
+                difficulty_labels=DIFFICULTY_LABELS,
             )
 
         question_image_file = request.files.get('question_image')
@@ -172,9 +182,11 @@ def create():
                 question=None,
                 options=options_draft,
                 subjects=subjects,
-                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option},
+                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option, 'difficulty': difficulty},
                 current_subject_id=subject_id,
                 option_keys=OPTION_KEYS,
+                difficulty_choices=DIFFICULTY_CHOICES,
+                difficulty_labels=DIFFICULTY_LABELS,
             )
 
         # Предварительная валидация вариантов (чтобы не сохранять файлы при ошибках)
@@ -209,9 +221,11 @@ def create():
                 question=None,
                 options=options_draft,
                 subjects=subjects,
-                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option},
+                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option, 'difficulty': difficulty},
                 current_subject_id=subject_id,
                 option_keys=OPTION_KEYS,
+                difficulty_choices=DIFFICULTY_CHOICES,
+                difficulty_labels=DIFFICULTY_LABELS,
             )
 
         # После успешной валидации сохраняем изображения
@@ -224,10 +238,10 @@ def create():
             cursor = db.cursor()
             cursor.execute(
                 '''
-                INSERT INTO questions (subject_id, question_text, question_image, correct_option)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO questions (subject_id, question_text, question_image, correct_option, difficulty)
+                VALUES (?, ?, ?, ?, ?)
                 ''',
-                (subject_id, question_text, question_image_path, correct_option),
+                (subject_id, question_text, question_image_path, correct_option, difficulty),
             )
             question_id = cursor.lastrowid
 
@@ -257,9 +271,11 @@ def create():
         question=None,
         options=options,
         subjects=subjects,
-        draft={'question_text': '', 'correct_option': 'a'},
+        draft={'question_text': '', 'correct_option': 'a', 'difficulty': 'easy'},
         current_subject_id=None,
         option_keys=OPTION_KEYS,
+        difficulty_choices=DIFFICULTY_CHOICES,
+        difficulty_labels=DIFFICULTY_LABELS,
     )
 
 
@@ -300,13 +316,18 @@ def edit(id: int):
                 question=question,
                 options=options_draft,
                 subjects=subjects,
-                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option},
+                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option, 'difficulty': request.form.get('difficulty', 'easy')},
                 current_subject_id=question['subject_id'],
                 option_keys=OPTION_KEYS,
+                difficulty_choices=DIFFICULTY_CHOICES,
+                difficulty_labels=DIFFICULTY_LABELS,
             )
 
         question_text = request.form.get('question_text', '').strip() or None
         correct_option = request.form.get('correct_option')
+        difficulty = request.form.get('difficulty', 'easy')
+        if difficulty not in DIFFICULTY_CHOICES:
+            difficulty = 'easy'
 
         if correct_option not in OPTION_KEYS:
             subjects = _load_subjects_for_dropdown(db, current_subject_id=question['subject_id'])
@@ -324,9 +345,11 @@ def edit(id: int):
                 question=question,
                 options=options_draft,
                 subjects=subjects,
-                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option},
+                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option, 'difficulty': difficulty},
                 current_subject_id=question['subject_id'],
                 option_keys=OPTION_KEYS,
+                difficulty_choices=DIFFICULTY_CHOICES,
+                difficulty_labels=DIFFICULTY_LABELS,
             )
 
         # Новые файлы (если загружены)
@@ -352,9 +375,11 @@ def edit(id: int):
                 question=question,
                 options=options_draft,
                 subjects=subjects,
-                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option},
+                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option, 'difficulty': difficulty},
                 current_subject_id=question['subject_id'],
                 option_keys=OPTION_KEYS,
+                difficulty_choices=DIFFICULTY_CHOICES,
+                difficulty_labels=DIFFICULTY_LABELS,
             )
 
         # Валидация вариантов
@@ -394,9 +419,11 @@ def edit(id: int):
                 question=question,
                 options=options_draft,
                 subjects=subjects,
-                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option},
+                draft={'question_text': request.form.get('question_text', ''), 'correct_option': correct_option, 'difficulty': difficulty},
                 current_subject_id=question['subject_id'],
                 option_keys=OPTION_KEYS,
+                difficulty_choices=DIFFICULTY_CHOICES,
+                difficulty_labels=DIFFICULTY_LABELS,
             )
 
         # Сохраняем новые изображения
@@ -413,10 +440,10 @@ def edit(id: int):
             db.execute(
                 '''
                 UPDATE questions
-                SET subject_id = ?, question_text = ?, question_image = ?, correct_option = ?
+                SET subject_id = ?, question_text = ?, question_image = ?, correct_option = ?, difficulty = ?
                 WHERE id = ?
                 ''',
-                (subject_id, question_text, new_question_image_path if new_question_image_path is not None else question['question_image'], correct_option, id),
+                (subject_id, question_text, new_question_image_path if new_question_image_path is not None else question['question_image'], correct_option, difficulty, id),
             )
 
             for k in OPTION_KEYS:
@@ -449,9 +476,11 @@ def edit(id: int):
         question=question,
         options=options,
         subjects=subjects,
-        draft={'question_text': '', 'correct_option': question['correct_option']},
+        draft={'question_text': '', 'correct_option': question['correct_option'], 'difficulty': question['difficulty']},
         current_subject_id=question['subject_id'],
         option_keys=OPTION_KEYS,
+        difficulty_choices=DIFFICULTY_CHOICES,
+        difficulty_labels=DIFFICULTY_LABELS,
     )
 
 

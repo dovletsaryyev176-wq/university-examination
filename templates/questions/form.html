@@ -55,6 +55,26 @@
                 </div>
 
                 <div class="mb-4">
+                    <label class="form-label fw-bold">Уровень сложности</label>
+                    {% set current_difficulty = question.difficulty if question else draft.get('difficulty', 'easy') %}
+                    <div class="d-flex gap-3 flex-wrap">
+                        {% for d in difficulty_choices %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="difficulty" value="{{ d }}"
+                                id="difficulty_{{ d }}" {% if current_difficulty == d %}checked{% endif %} required>
+                            <label class="form-check-label" for="difficulty_{{ d }}">
+                                {% if d == 'easy' %}
+                                <span class="badge bg-success">{{ difficulty_labels[d] }}</span>
+                                {% else %}
+                                <span class="badge bg-danger">{{ difficulty_labels[d] }}</span>
+                                {% endif %}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mb-4">
                     <h5 class="mb-3 text-secondary">Варианты ответов (A/B/C/D/E)</h5>
 
                     {% for k in option_keys %}

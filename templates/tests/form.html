@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="main-card shadow-sm p-4 bg-white rounded">
+            <h3 class="mb-4">{{ 'Редактировать тест' if test else 'Новый тест' }}</h3>
+
+            <form method="POST" id="test-form" novalidate>
+
+                {# ── Основные поля ─────────────────────────────────────────── #}
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Наименование теста</label>
+                    <input type="text" name="name" class="form-control form-control-lg"
+                           placeholder="Например: Итоговый тест по математике"
+                           value="{{ draft.name }}" required>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Общее кол-во вопросов</label>
+                        <input type="number" name="total_questions" id="totalQuestionsInput"
+                               class="form-control form-control-lg"
+                               value="{{ draft.total_questions }}"
+                               min="1" required>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">
+                            Доля лёгких вопросов:
+                            <span id="easyPercentVal" class="text-success fw-bold">{{ draft.easy_percent }}%</span>
+                            &nbsp;/&nbsp; Сложных:
+                            <span id="hardPercentVal" class="text-danger fw-bold">{{ 100 - draft.easy_percent }}%</span>
+                        </label>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="text-success small">0%</span>
+                            <input type="range" name="easy_percent" id="easyPercentSlider"
+                                   class="form-range flex-grow-1"
+                                   min="0" max="100" step="5"
+                                   value="{{ draft.easy_percent }}">
+                            <span class="text-danger small">100%</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-success">← Лёгкие</small>
+                            <small class="text-danger">Сложные →</small>
+                        </div>
+                    </div>
+                </div>
+
+                {# ── Предметы ──────────────────────────────────────────────── #}
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 text-secondary">Предметы и количество вопросов</h5>
+                        <button type="button" id="addSubjectBtn" class="btn btn-outline-primary btn-sm px-3">
+                            + Добавить предмет
+                        </button>
+                    </div>
+
+                    {# Счётчик #}
+                    <div class="alert alert-light border py-2 px-3 mb-3 d-flex justify-content-between align-items-center" id="sumAlert">
+                        <span>
+                            Сумма по предметам:
+                            <strong id="sumDisplay">0</strong>
+                            &nbsp;/&nbsp;
+                            Всего: <strong id="totalDisplay">{{ draft.total_questions or 0 }}</strong>
+                        </span>
+                        <span id="sumStatus" class="badge bg-secondary">—</span>
+                    </div>
+
+                    <div id="subjectsContainer">
+                        {# Строки заполняются JS при загрузке страницы #}
+                    </div>
+
+                    <div id="noSubjectsMsg" class="text-muted text-center py-3" style="display:none;">
+                        Нажмите «+ Добавить предмет» чтобы начать
+                    </div>
+                </div>
+
+                {# ── Кнопки ────────────────────────────────────────────────── #}
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{{ url_for('tests.index') }}" class="btn btn-link text-secondary text-decoration-none">
+                        Отмена
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Сохранить</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Данные из сервера ────────────────────────────────────────────────────────
+const availableSubjects = {{ subjects_json | safe }};
+const existingRows = {{ existing_rows | tojson }};
+
+// ── Состояние ────────────────────────────────────────────────────────────────
+let rowCounter = 0;
+
+// ── Утилиты ──────────────────────────────────────────────────────────────────
+function buildSelectOptions(selectedId) {
+    return availableSubjects.map(s =>
+        `<option value="${s.id}" ${s.id === selectedId ? 'selected' : ''}>${s.name}</option>`
+    ).join('');
+}
+
+function getEasyPercent() {
+    return parseInt(document.getElementById('easyPercentSlider').value) || 50;
+}
+
+function createRow(subjectId, count) {
+    const idx = rowCounter++;
+    const div = document.createElement('div');
+    div.className = 'border rounded p-2 mb-2 subject-row';
+    div.dataset.index = idx;
+    div.innerHTML = `
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <select name="subject_id" class="form-select subject-select" required>
+                    <option value="">— выберите предмет —</option>
+                    ${buildSelectOptions(subjectId)}
+                </select>
+            </div>
+            <div class="col-auto" style="width:190px;">
+                <div class="input-group">
+                    <span class="input-group-text text-muted small">Вопросов</span>
+                    <input type="number" name="question_count"
+                           class="form-control question-count-input"
+                           min="1" value="${count || ''}" required placeholder="0">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn" title="Убрать">✕</button>
+            </div>
+        </div>
+        <div class="stats-info small mt-1 ps-1"></div>`;
+    return div;
+}
+
+// ── Получение и отображение статистики доступности ───────────────────────────
+async function fetchStats(row) {
+    const subjectId = row.querySelector('.subject-select').value;
+    const statsDiv = row.querySelector('.stats-info');
+    if (!subjectId) {
+        statsDiv.innerHTML = '';
+        return;
+    }
+
+    const ep = getEasyPercent();
+    let data;
+    try {
+        const resp = await fetch(`/tests/api/subject-stats?subject_id=${subjectId}&easy_percent=${ep}`);
+        data = await resp.json();
+    } catch (err) {
+        statsDiv.innerHTML = '<span class="text-muted">Ошибка загрузки статистики</span>';
+        return;
+    }
+
+    const count = parseInt(row.querySelector('.question-count-input').value) || 0;
+    const easyNeed = Math.round(count * ep / 100);
+    const hardNeed = count - easyNeed;
+    const maxFeasible = data.max_feasible;
+
+    const easyOk = easyNeed <= data.easy_available;
+    const hardOk = hardNeed <= data.hard_available;
+    const countOk = count > 0 ? (count <= maxFeasible) : true;
+
+    let html = `<span class="text-muted">
+        Активных вопросов — лёгких: <strong>${data.easy_available}</strong>,
+        сложных: <strong>${data.hard_available}</strong> &nbsp;|&nbsp;
+        Макс. для ${ep}%/${100-ep}%: <strong class="${maxFeasible === 0 ? 'text-danger' : 'text-success'}">${maxFeasible}</strong>
+    </span>`;
+
+    if (count > 0 && !countOk) {
+        let detail = '';
+        if (!easyOk) detail += ` лёгких нужно ${easyNeed}, доступно ${data.easy_available};`;
+        if (!hardOk)  detail += ` сложных нужно ${hardNeed}, доступно ${data.hard_available};`;
+        html += `<br><span class="text-danger fw-semibold">
+            ⚠ Нельзя сгенерировать ${count} вопросов при данном соотношении (макс: ${maxFeasible}).${detail}
+        </span>`;
+
+        row.querySelector('.question-count-input').classList.add('is-invalid');
+    } else {
+        row.querySelector('.question-count-input').classList.remove('is-invalid');
+    }
+
+    statsDiv.innerHTML = html;
+}
+
+function fetchAllStats() {
+    document.querySelectorAll('.subject-row').forEach(row => fetchStats(row));
+}
+
+// ── Обновление счётчика суммы ─────────────────────────────────────────────────
+function updateSum() {
+    const inputs = document.querySelectorAll('.question-count-input');
+    let sum = 0;
+    inputs.forEach(inp => { sum += parseInt(inp.value) || 0; });
+
+    const total = parseInt(document.getElementById('totalQuestionsInput').value) || 0;
+    document.getElementById('sumDisplay').textContent = sum;
+    document.getElementById('totalDisplay').textContent = total;
+
+    const badge = document.getElementById('sumStatus');
+    const alertEl = document.getElementById('sumAlert');
+    if (total === 0) {
+        badge.textContent = '—';
+        badge.className = 'badge bg-secondary';
+        alertEl.className = 'alert alert-light border py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
+    } else if (sum === total) {
+        badge.textContent = '✓ Верно';
+        badge.className = 'badge bg-success';
+        alertEl.className = 'alert alert-success py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
+    } else {
+        badge.textContent = sum < total ? `Не хватает ${total - sum}` : `Лишних ${sum - total}`;
+        badge.className = 'badge bg-danger';
+        alertEl.className = 'alert alert-danger py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
+    }
+
+    const noMsg = document.getElementById('noSubjectsMsg');
+    const rows = document.querySelectorAll('.subject-row');
+    noMsg.style.display = rows.length === 0 ? '' : 'none';
+}
+
+// ── Добавление строки ─────────────────────────────────────────────────────────
+function addRow(subjectId, count) {
+    const container = document.getElementById('subjectsContainer');
+    const row = createRow(subjectId, count);
+    container.appendChild(row);
+
+    row.querySelector('.remove-row-btn').addEventListener('click', () => {
+        row.remove();
+        updateSum();
+    });
+    row.querySelector('.question-count-input').addEventListener('input', () => {
+        updateSum();
+        fetchStats(row);
+    });
+    row.querySelector('.subject-select').addEventListener('change', () => fetchStats(row));
+
+    updateSum();
+    if (subjectId) fetchStats(row);
+}
+
+// ── Слайдер ───────────────────────────────────────────────────────────────────
+const slider = document.getElementById('easyPercentSlider');
+slider.addEventListener('input', () => {
+    const v = parseInt(slider.value);
+    document.getElementById('easyPercentVal').textContent = v + '%';
+    document.getElementById('hardPercentVal').textContent = (100 - v) + '%';
+    updateSum();
+    fetchAllStats();  // пересчитать max для всех строк при изменении %
+});
+
+// ── Кнопка добавления ─────────────────────────────────────────────────────────
+document.getElementById('addSubjectBtn').addEventListener('click', () => addRow('', ''));
+
+// ── Изменение total_questions ─────────────────────────────────────────────────
+document.getElementById('totalQuestionsInput').addEventListener('input', updateSum);
+
+// ── Валидация перед отправкой ─────────────────────────────────────────────────
+document.getElementById('test-form').addEventListener('submit', function(e) {
+    const rows = document.querySelectorAll('.subject-row');
+    if (rows.length === 0) {
+        e.preventDefault();
+        alert('Добавьте хотя бы один предмет.');
+        return;
+    }
+    const total = parseInt(document.getElementById('totalQuestionsInput').value) || 0;
+    let sum = 0;
+    document.querySelectorAll('.question-count-input').forEach(inp => {
+        sum += parseInt(inp.value) || 0;
+    });
+    if (sum !== total) {
+        e.preventDefault();
+        alert(`Сумма вопросов по предметам (${sum}) должна равняться общему количеству (${total}).`);
+    }
+    // Блокировать если есть предметы с недостатком активных вопросов
+    const invalidInputs = document.querySelectorAll('.question-count-input.is-invalid');
+    if (invalidInputs.length > 0) {
+        e.preventDefault();
+        alert('Невозможно сохранить тест: для некоторых предметов недостаточно активных вопросов. Исправьте количество или разблокируйте вопросы.');
+    }
+});
+
+// ── Инициализация ─────────────────────────────────────────────────────────────
+if (existingRows.length > 0) {
+    existingRows.forEach(r => addRow(r.subject_id, r.question_count));
+} else {
+    updateSum();
+}
+</script>
+{% endblock %}

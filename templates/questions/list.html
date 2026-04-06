@@ -16,6 +16,7 @@
                     <th style="width: 90px;">Статус</th>
                     <th style="width: 180px;">Предмет</th>
                     <th>Вопрос</th>
+                    <th style="width: 110px;">Сложность</th>
                     <th style="width: 140px;">Правильный</th>
                     <th class="text-end px-4" style="width: 220px;">Действия</th>
                 </tr>
@@ -54,6 +55,14 @@
                     </td>
 
                     <td>
+                        {% if q.difficulty == 'hard' %}
+                        <span class="badge bg-danger">Сложный</span>
+                        {% else %}
+                        <span class="badge bg-success">Лёгкий</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
                         <span class="badge bg-primary">{{ q.correct_option|upper }}</span>
                     </td>
 
@@ -72,7 +81,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="text-center py-4 text-muted">Список вопросов пуст</td>
+                    <td colspan="6" class="text-center py-4 text-muted">Список вопросов пуст</td>
                 </tr>
                 {% endfor %}
             </tbody>

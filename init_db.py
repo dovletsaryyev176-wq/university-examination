@@ -26,4 +26,4 @@ def init_db():
     conn.close()
 
 if __name__ == '__main__':
-    init_db()
+    init_db()

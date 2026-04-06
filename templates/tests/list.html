@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="main-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0 text-secondary">Тесты</h2>
+        <a href="{{ url_for('tests.create') }}" class="btn btn-primary px-4">
+            + Создать тест
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light text-secondary">
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Наименование</th>
+                    <th style="width: 170px;" class="text-center">Вопросов (всего)</th>
+                    <th style="width: 190px;" class="text-center">Лёгкие / Сложные</th>
+                    <th style="width: 130px;" class="text-center">Предметов</th>
+                    <th class="text-end" style="width: 260px;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tests %}
+                <tr>
+                    <td class="text-muted">{{ t.id }}</td>
+                    <td>
+                        <strong>{{ t.name }}</strong>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-primary fs-6">{{ t.total_questions }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-success me-1">{{ t.easy_percent }}% лёгких</span>
+                        <span class="badge bg-danger">{{ 100 - t.easy_percent }}% сложных</span>
+                    </td>
+                    <td class="text-center text-muted">{{ t.subject_count }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('tests.export_pdf', id=t.id) }}"
+                           class="btn btn-sm btn-outline-secondary me-1" title="Скачать PDF">
+                            ⬇ PDF
+                        </a>
+                        <a href="{{ url_for('tests.edit', id=t.id) }}"
+                           class="btn btn-sm btn-outline-primary me-1">Изм.</a>
+                        <form action="{{ url_for('tests.delete', id=t.id) }}" method="POST"
+                              class="d-inline"
+                              onsubmit="return confirm('Удалить тест «{{ t.name }}»?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">Тестов пока нет</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
