@@ -73,6 +73,9 @@
                     <div id="noSubjectsMsg" class="text-muted text-center py-3" style="display:none;">
                         Нажмите «+ Добавить предмет» чтобы начать
                     </div>
+                    <div id="remainingHint" class="text-muted small mt-1" style="display:none;">
+                        Нажмите «+ Добавить предмет» чтобы распределить оставшиеся вопросы по другим предметам.
+                    </div>
                 </div>
 
                 {# ── Кнопки ────────────────────────────────────────────────── #}
@@ -212,15 +215,21 @@ function updateSum() {
         badge.textContent = '✓ Верно';
         badge.className = 'badge bg-success';
         alertEl.className = 'alert alert-success py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
+    } else if (sum < total) {
+        badge.textContent = `Ещё нужно ${total - sum}`;
+        badge.className = 'badge bg-warning text-dark';
+        alertEl.className = 'alert alert-warning py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
     } else {
-        badge.textContent = sum < total ? `Не хватает ${total - sum}` : `Лишних ${sum - total}`;
+        badge.textContent = `Лишних ${sum - total}`;
         badge.className = 'badge bg-danger';
         alertEl.className = 'alert alert-danger py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
     }
 
     const noMsg = document.getElementById('noSubjectsMsg');
+    const remainingHint = document.getElementById('remainingHint');
     const rows = document.querySelectorAll('.subject-row');
     noMsg.style.display = rows.length === 0 ? '' : 'none';
+    remainingHint.style.display = (rows.length > 0 && sum > 0 && sum < total) ? '' : 'none';
 }
 
 // ── Добавление строки ─────────────────────────────────────────────────────────
@@ -274,13 +283,20 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
     });
     if (sum !== total) {
         e.preventDefault();
-        alert(`Сумма вопросов по предметам (${sum}) должна равняться общему количеству (${total}).`);
+        const diff = total - sum;
+        if (diff > 0) {
+            alert(`Ещё нужно распределить ${diff} вопросов.\n\nНажмите «+ Добавить предмет», чтобы добавить ещё один предмет с оставшимися вопросами.`);
+        } else {
+            alert(`Вопросов указано лишних: ${-diff}. Уменьшите количество в одном из предметов.`);
+        }
+        return;
     }
     // Блокировать если есть предметы с недостатком активных вопросов
     const invalidInputs = document.querySelectorAll('.question-count-input.is-invalid');
     if (invalidInputs.length > 0) {
         e.preventDefault();
         alert('Невозможно сохранить тест: для некоторых предметов недостаточно активных вопросов. Исправьте количество или разблокируйте вопросы.');
+        return;
     }
 });
 
@@ -288,7 +304,8 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
 if (existingRows.length > 0) {
     existingRows.forEach(r => addRow(r.subject_id, r.question_count));
 } else {
-    updateSum();
+    // Автоматически добавить первую строку при создании нового теста
+    addRow('', '');
 }
 </script>
 {% endblock %}
