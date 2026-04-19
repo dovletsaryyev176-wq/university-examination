@@ -9,7 +9,8 @@
             <form method="POST" enctype="multipart/form-data">
                 <div class="mb-4">
                     <label class="form-label fw-bold">Предмет</label>
-                    <select name="subject_id" class="form-select form-select-lg" required>
+                    <select name="subject_id" id="subject_select" class="form-select form-select-lg" required>
+                        <option value="" disabled {% if not current_subject_id %}selected{% endif %}>— выберите предмет —</option>
                         {% for s in subjects %}
                         <option value="{{ s.id }}"
                             {% if question and s.id == question.subject_id %}selected{% endif %}
@@ -41,14 +42,14 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Правильный вариант</label>
-                    {% set correct = question.correct_option if question else draft.get('correct_option', 'a') %}
-                    <div class="d-flex gap-3 flex-wrap">
+                    <label class="form-label fw-bold">Правильные варианты <span class="text-muted fw-normal">(можно выбрать несколько)</span></label>
+                    {% set correct_list = draft.get('correct_options_list', []) %}
+                    <div class="d-flex gap-3 flex-wrap" id="correct_options_wrap">
                         {% for k in option_keys %}
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="correct_option" value="{{ k }}"
-                                id="correct_{{ k }}" {% if correct == k %}checked{% endif %} required>
-                            <label class="form-check-label" for="correct_{{ k }}"> {{ k|upper }}</label>
+                        <div class="form-check" id="correct_item_{{ k }}">
+                            <input class="form-check-input" type="checkbox" name="correct_options" value="{{ k }}"
+                                id="correct_{{ k }}" {% if k in correct_list %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="correct_{{ k }}">{{ k|upper }}</label>
                         </div>
                         {% endfor %}
                     </div>
@@ -75,13 +76,11 @@
                 </div>
 
                 <div class="mb-4">
-                    <h5 class="mb-3 text-secondary">Варианты ответов (A/B/C/D/E)</h5>
+                    <h5 class="mb-3 text-secondary" id="options_heading">Варианты ответов</h5>
 
                     {% for k in option_keys %}
-                    <div class="border rounded p-3 mb-3 bg-light">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="fw-bold">Вариант {{ k|upper }}</div>
-                        </div>
+                    <div class="border rounded p-3 mb-3 bg-light" id="option_block_{{ k }}">
+                        <div class="fw-bold mb-2">Вариант {{ k|upper }}</div>
 
                         <label class="form-label fw-bold">Текст варианта</label>
                         <input type="text" name="option_{{ k }}_text" class="form-control form-control-lg mb-2"
@@ -104,13 +103,40 @@
 
                 <div class="d-flex justify-content-between align-items-center mt-4">
                     <a href="{{ url_for('questions.index') }}" class="btn btn-link text-secondary text-decoration-none">Отмена</a>
-                    <button type="submit" class="btn btn-primary btn-lg px-5">
-                        Сохранить
-                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Сохранить</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-{% endblock %}
 
+<script>
+const subjectAnswerCounts = {{ subject_answer_counts | tojson }};
+const allKeys = ['a', 'b', 'c', 'd', 'e'];
+
+function updateOptionsVisibility() {
+    const select = document.getElementById('subject_select');
+    const subjectId = select ? select.value : '';
+    const count = subjectId && subjectAnswerCounts[subjectId] ? subjectAnswerCounts[subjectId] : 0;
+
+    allKeys.forEach(function(k, i) {
+        const block = document.getElementById('option_block_' + k);
+        const correctItem = document.getElementById('correct_item_' + k);
+        const correctCheck = document.getElementById('correct_' + k);
+        const show = count > 0 && i < count;
+
+        if (block) block.style.display = show ? '' : 'none';
+        if (correctItem) correctItem.style.display = show ? '' : 'none';
+        if (!show && correctCheck) correctCheck.checked = false;
+    });
+
+    const heading = document.getElementById('options_heading');
+    if (heading && count > 0) {
+        heading.textContent = 'Варианты ответов (A–' + allKeys[count - 1].toUpperCase() + ')';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', updateOptionsVisibility);
+document.getElementById('subject_select').addEventListener('change', updateOptionsVisibility);
+</script>
+{% endblock %}

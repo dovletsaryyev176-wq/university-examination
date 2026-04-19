@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="main-card shadow-sm p-4 bg-white rounded">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <h2 class="h4 mb-0">{{ session.name }}</h2>
+            <div class="text-muted small mt-1">{{ session.created_at }}</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('exam.export_pdf', id=session.id) }}"
+               class="btn btn-outline-secondary btn-sm">⬇ PDF</a>
+            <a href="{{ url_for('exam.index') }}"
+               class="btn btn-link text-secondary btn-sm">← Назад</a>
+        </div>
+    </div>
+
+    {# Summary banner #}
+    {% if total_conflicts == 0 %}
+    <div class="alert alert-success py-2 mt-3 mb-4">
+        ✓ Все студенты из разных областей — условие соблюдено полностью.
+    </div>
+    {% else %}
+    <div class="alert alert-warning py-2 mt-3 mb-4">
+        ⚠ Конфликтов (смежных из одной области): <strong>{{ total_conflicts }}</strong> —
+        выделены оранжевым. Это минимально возможное при данном составе.
+    </div>
+    {% endif %}
+
+    {% for room_data in classrooms_data %}
+    {% set c = room_data.classroom %}
+    {% set sts = room_data.students %}
+
+    <div class="mb-5">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+            <div>
+                <h5 class="mb-0 text-primary">{{ c.name }}</h5>
+                <small class="text-muted">
+                    {{ c.location }} · Вместимость: {{ c.capacity }} · Размещено: {{ sts|length }}
+                </small>
+            </div>
+            {% if room_data.conflicts > 0 %}
+            <span class="badge bg-warning text-dark">{{ room_data.conflicts }} конфл.</span>
+            {% else %}
+            <span class="badge bg-success">Без конфликтов</span>
+            {% endif %}
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm align-middle" style="font-size: 0.88rem;">
+                <thead class="table-light text-secondary">
+                    <tr>
+                        <th style="width: 55px;" class="text-center">Место</th>
+                        <th style="width: 75px;">Номер</th>
+                        <th>Фамилия</th>
+                        <th>Имя</th>
+                        <th>Отчество</th>
+                        <th>Область</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set ns = namespace(prev='') %}
+                    {% for s in sts %}
+                    {% set conflict = ns.prev != '' and s.region == ns.prev %}
+                    <tr class="{{ 'table-warning' if conflict else '' }}">
+                        <td class="text-center text-muted">{{ s.seat_number }}</td>
+                        <td class="text-muted">{{ s.student_number or '—' }}</td>
+                        <td class="fw-bold">{{ s.last_name }}</td>
+                        <td>{{ s.first_name }}</td>
+                        <td class="text-muted">{{ s.patronymic or '' }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark border {{ 'border-warning' if conflict else '' }}">
+                                {{ s.region }}
+                            </span>
+                            {% if conflict %}
+                            <span class="text-warning small ms-1" title="Та же область, что и предыдущий">⚠</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% set ns.prev = s.region %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="main-card shadow-sm p-4 bg-white rounded">
+            <h3 class="mb-4">Новое размещение на экзамен</h3>
+
+            <div class="alert alert-info py-2 mb-4">
+                Студентов в списке: <strong>{{ total_students }}</strong>
+                {% if total_students == 0 %}
+                — <a href="{{ url_for('students.index') }}">Импортируйте студентов</a>
+                {% endif %}
+            </div>
+
+            <form method="POST" id="createForm">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Наименование размещения</label>
+                    <input type="text" name="name" class="form-control form-control-lg"
+                           value="{{ form_name }}"
+                           placeholder="Например: Весенняя сессия 2025" required autofocus>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0">Классы для размещения</label>
+                        <span class="small text-muted">
+                            Выбрано мест: <strong id="totalCapacity">0</strong>
+                            / нужно: <strong>{{ total_students }}</strong>
+                        </span>
+                    </div>
+
+                    {% if classrooms %}
+                    <div class="border rounded p-3">
+                        {% for c in classrooms %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input room-check" type="checkbox"
+                                   name="classroom_ids" value="{{ c.id }}"
+                                   id="room_{{ c.id }}"
+                                   data-capacity="{{ c.capacity }}"
+                                   {{ 'checked' if c.id in selected_ids else '' }}>
+                            <label class="form-check-label d-flex align-items-center gap-2" for="room_{{ c.id }}">
+                                <strong>{{ c.name }}</strong>
+                                <span class="text-muted small">{{ c.location }}</span>
+                                <span class="badge bg-info text-dark">{{ c.capacity }} мест</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-muted">
+                        Нет активных классов.
+                        <a href="{{ url_for('classrooms.create') }}">Добавьте класс.</a>
+                    </div>
+                    {% endif %}
+
+                    <div id="capacityAlert" class="mt-2" style="display:none;"></div>
+                </div>
+
+                <div class="alert alert-light border small mb-4">
+                    <strong>Алгоритм размещения:</strong> студенты из разных областей чередуются —
+                    самая многочисленная область всегда ставится в позицию, отличную от предыдущей.
+                    При наличии одной доминирующей области часть «соседств» неизбежна.
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('exam.index') }}" class="btn btn-link text-secondary">Отмена</a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Разместить студентов</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const totalStudents = {{ total_students }};
+
+function updateCapacity() {
+    let total = 0;
+    document.querySelectorAll('.room-check:checked').forEach(cb => {
+        total += parseInt(cb.dataset.capacity) || 0;
+    });
+    document.getElementById('totalCapacity').textContent = total;
+
+    const el = document.getElementById('capacityAlert');
+    if (total === 0) {
+        el.style.display = 'none';
+    } else if (total < totalStudents) {
+        el.innerHTML = `<div class="alert alert-warning py-2 mb-0">Не хватает мест: выбрано ${total}, нужно ${totalStudents}. Добавьте ещё классы.</div>`;
+        el.style.display = '';
+    } else {
+        const free = total - totalStudents;
+        el.innerHTML = `<div class="alert alert-success py-2 mb-0">✓ Мест достаточно${free > 0 ? '. Свободных мест после размещения: ' + free : ''}.</div>`;
+        el.style.display = '';
+    }
+}
+
+document.querySelectorAll('.room-check').forEach(cb => cb.addEventListener('change', updateCapacity));
+updateCapacity();
+</script>
+{% endblock %}

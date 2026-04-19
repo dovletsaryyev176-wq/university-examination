@@ -26,7 +26,6 @@ def _get_active_subjects(db):
 
 
 def _parse_subject_rows(form):
-    """Parse repeated subject_id[] / question_count[] from form."""
     subject_ids = request.form.getlist('subject_id')
     question_counts = request.form.getlist('question_count')
     rows = []
@@ -41,7 +40,6 @@ def _parse_subject_rows(form):
 
 
 def _validate_rows(db, rows, total_questions):
-    """Returns list of error strings, empty if valid."""
     errors = []
     if not rows:
         errors.append('Добавьте хотя бы один предмет.')
@@ -54,7 +52,7 @@ def _validate_rows(db, rows, total_questions):
             break
         seen.add(r['subject_id'])
         if r['question_count'] <= 0:
-            errors.append(f'Количество вопросов должно быть больше 0.')
+            errors.append('Количество вопросов должно быть больше 0.')
 
     total = sum(r['question_count'] for r in rows)
     if total != total_questions:
@@ -63,7 +61,6 @@ def _validate_rows(db, rows, total_questions):
             f'общему количеству вопросов ({total_questions}).'
         )
 
-    # Validate subject IDs exist and are active
     valid_ids = {r['id'] for r in db.execute(
         'SELECT id FROM subjects WHERE is_active = 1'
     ).fetchall()}
@@ -75,10 +72,6 @@ def _validate_rows(db, rows, total_questions):
 
 
 def _calc_feasible_max(easy_available: int, hard_available: int, easy_percent: int) -> int:
-    """
-    Return the maximum number of questions we can generate given
-    the available counts and the easy/hard split (round()-based).
-    """
     total_avail = easy_available + hard_available
     if total_avail == 0:
         return 0
@@ -92,7 +85,6 @@ def _calc_feasible_max(easy_available: int, hard_available: int, easy_percent: i
 
 
 def _check_availability(db, rows, easy_percent):
-    """Returns list of availability error strings, empty if all subjects have enough questions."""
     errors = []
     for r in rows:
         easy_avail = db.execute(
@@ -124,18 +116,19 @@ def _check_availability(db, rows, easy_percent):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> bytes:
+    """
+    questions_with_options: list of (question_dict, options_dict, active_keys_tuple)
+    """
     from fpdf import FPDF
 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=20)
 
-    # Load fonts (Arial supports Cyrillic on Windows)
     pdf.add_font('Arial', '', FONT_REGULAR)
     pdf.add_font('Arial', 'B', FONT_BOLD)
 
     pdf.add_page()
 
-    # ── Header ──────────────────────────────────────────────────────────────
     pdf.set_font('Arial', 'B', 20)
     pdf.cell(0, 14, text=test['name'], align='C', new_x='LMARGIN', new_y='NEXT')
 
@@ -153,7 +146,6 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
     pdf.set_text_color(0, 0, 0)
     pdf.ln(4)
 
-    # Divider line
     pdf.set_draw_color(80, 80, 200)
     pdf.set_line_width(0.8)
     pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
@@ -161,21 +153,16 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
     pdf.set_draw_color(180, 180, 180)
     pdf.ln(8)
 
-    # ── Questions ────────────────────────────────────────────────────────────
-    for i, (question, options) in enumerate(questions_with_options, 1):
-
-        # Determine if this question has any images (question or any option)
+    for i, (question, options, active_keys) in enumerate(questions_with_options, 1):
         has_imgs = bool(question.get('question_image')) or any(
             opt.get('option_image')
             for opt in options.values()
             if opt.get('option_image')
         )
 
-        # Questions with images always start on a fresh page so they don't split
         if has_imgs:
             pdf.add_page()
 
-        # Question text
         pdf.set_font('Arial', 'B', 12)
         q_text = question.get('question_text') or ''
         if q_text:
@@ -183,7 +170,6 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
         else:
             pdf.multi_cell(0, 8, text=f"{i}.", new_x='LMARGIN', new_y='NEXT')
 
-        # Question image
         if question.get('question_image'):
             img_path = os.path.join(
                 static_dir, question['question_image'].replace('/', os.sep)
@@ -194,9 +180,8 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
                 pdf.image(img_path, x=pdf.l_margin + 8, w=img_w)
                 pdf.ln(3)
 
-        # Options A–E
         pdf.set_font('Arial', '', 11)
-        for opt_key in ('a', 'b', 'c', 'd', 'e'):
+        for opt_key in active_keys:
             opt = options.get(opt_key, {})
             opt_text = opt.get('option_text') or ''
             opt_image = opt.get('option_image')
@@ -208,7 +193,6 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
                     new_x='LMARGIN', new_y='NEXT',
                 )
             else:
-                # Only image — print label on its own line
                 pdf.cell(0, 7, text=f"    {opt_key.upper()})", new_x='LMARGIN', new_y='NEXT')
 
             if opt_image:
@@ -221,7 +205,6 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
 
         pdf.ln(4)
         if not has_imgs:
-            # Separator only for text-only questions — image ones start on a new page anyway
             pdf.set_draw_color(180, 180, 180)
             pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
             pdf.ln(5)
@@ -321,11 +304,7 @@ def create():
                 test=None,
                 subjects_json=subjects_json,
                 subjects=subjects,
-                draft={
-                    'name': name,
-                    'total_questions': total_questions,
-                    'easy_percent': easy_percent,
-                },
+                draft={'name': name, 'total_questions': total_questions, 'easy_percent': easy_percent},
                 existing_rows=rows,
             )
 
@@ -408,11 +387,7 @@ def edit(id: int):
                 test=test,
                 subjects_json=subjects_json,
                 subjects=subjects,
-                draft={
-                    'name': name,
-                    'total_questions': total_questions,
-                    'easy_percent': easy_percent,
-                },
+                draft={'name': name, 'total_questions': total_questions, 'easy_percent': easy_percent},
                 existing_rows=rows,
             )
 
@@ -436,7 +411,6 @@ def edit(id: int):
             db.close()
             flash('Ошибка сохранения: проверьте данные.', 'danger')
 
-    # GET — load existing test_subjects
     test_subjects = db.execute(
         'SELECT subject_id, question_count FROM test_subjects WHERE test_id = ? ORDER BY id',
         (id,),
@@ -480,7 +454,7 @@ def export_pdf(id: int):
 
     test_subjects = db.execute(
         '''
-        SELECT ts.subject_id, ts.question_count, s.name AS subject_name
+        SELECT ts.subject_id, ts.question_count, s.name AS subject_name, s.answer_count
         FROM test_subjects ts
         JOIN subjects s ON s.id = ts.subject_id
         WHERE ts.test_id = ?
@@ -495,10 +469,11 @@ def export_pdf(id: int):
         q_count = ts['question_count']
         easy_count = round(q_count * easy_percent / 100)
         hard_count = q_count - easy_count
+        active_keys = ('a', 'b', 'c', 'd', 'e')[:ts['answer_count']]
 
         easy_qs = db.execute(
             '''
-            SELECT id, question_text, question_image
+            SELECT id, question_text, question_image, correct_option, subject_id
             FROM questions
             WHERE subject_id = ? AND difficulty = 'easy' AND is_active = 1
             ORDER BY RANDOM() LIMIT ?
@@ -508,7 +483,7 @@ def export_pdf(id: int):
 
         hard_qs = db.execute(
             '''
-            SELECT id, question_text, question_image
+            SELECT id, question_text, question_image, correct_option, subject_id
             FROM questions
             WHERE subject_id = ? AND difficulty = 'hard' AND is_active = 1
             ORDER BY RANDOM() LIMIT ?
@@ -516,23 +491,32 @@ def export_pdf(id: int):
             (ts['subject_id'], hard_count),
         ).fetchall()
 
-        all_questions.extend(easy_qs)
-        all_questions.extend(hard_qs)
+        for q in list(easy_qs) + list(hard_qs):
+            all_questions.append((dict(q), active_keys))
 
     random.shuffle(all_questions)
 
-    # Load options for every question
     questions_with_options = []
-    for q in all_questions:
+    for q_dict, active_keys in all_questions:
         opts = db.execute(
             'SELECT option_key, option_text, option_image FROM question_options WHERE question_id = ?',
-            (q['id'],),
+            (q_dict['id'],),
         ).fetchall()
         options = {row['option_key']: dict(row) for row in opts}
         for k in ('a', 'b', 'c', 'd', 'e'):
             options.setdefault(k, {'option_key': k, 'option_text': None, 'option_image': None})
-        questions_with_options.append((dict(q), options))
+        questions_with_options.append((q_dict, options, active_keys))
 
+    # Сохраняем экземпляр теста с выбранными вопросами и правильными ответами
+    cursor = db.cursor()
+    cursor.execute('INSERT INTO test_instances (test_id) VALUES (?)', (id,))
+    instance_id = cursor.lastrowid
+    for order, (q_dict, options, active_keys) in enumerate(questions_with_options, 1):
+        cursor.execute(
+            'INSERT INTO test_instance_questions (instance_id, subject_id, question_id, correct_option, question_order) VALUES (?, ?, ?, ?, ?)',
+            (instance_id, q_dict['subject_id'], q_dict['id'], q_dict['correct_option'], order),
+        )
+    db.commit()
     db.close()
 
     static_dir = os.path.join(_project_root(), 'static')
@@ -545,3 +529,124 @@ def export_pdf(id: int):
         as_attachment=True,
         download_name=f'{safe_name}.pdf',
     )
+
+
+@tests_bp.route('/<int:test_id>/instances')
+@login_required
+def instances(test_id: int):
+    db = get_db_connection()
+    test = db.execute('SELECT * FROM tests WHERE id = ?', (test_id,)).fetchone()
+    if not test:
+        db.close()
+        flash('Тест не найден', 'danger')
+        return redirect(url_for('tests.index'))
+
+    instances_list = db.execute(
+        '''
+        SELECT ti.id, ti.created_at, COUNT(tiq.id) AS question_count
+        FROM test_instances ti
+        LEFT JOIN test_instance_questions tiq ON tiq.instance_id = ti.id
+        WHERE ti.test_id = ?
+        GROUP BY ti.id
+        ORDER BY ti.id DESC
+        ''',
+        (test_id,),
+    ).fetchall()
+    db.close()
+    return render_template('tests/instances.html', test=test, instances=instances_list)
+
+
+@tests_bp.route('/instances/<int:instance_id>')
+@login_required
+def instance_detail(instance_id: int):
+    db = get_db_connection()
+    instance = db.execute(
+        '''
+        SELECT ti.id, ti.created_at, ti.test_id, t.name AS test_name
+        FROM test_instances ti
+        JOIN tests t ON t.id = ti.test_id
+        WHERE ti.id = ?
+        ''',
+        (instance_id,),
+    ).fetchone()
+    if not instance:
+        db.close()
+        flash('Экземпляр теста не найден', 'danger')
+        return redirect(url_for('tests.index'))
+
+    rows = db.execute(
+        '''
+        SELECT
+            tiq.question_order,
+            tiq.correct_option,
+            tiq.subject_id,
+            s.name AS subject_name,
+            s.answer_count,
+            q.question_text,
+            q.question_image,
+            q.difficulty,
+            tiq.question_id
+        FROM test_instance_questions tiq
+        JOIN subjects s ON s.id = tiq.subject_id
+        JOIN questions q ON q.id = tiq.question_id
+        WHERE tiq.instance_id = ?
+        ORDER BY tiq.question_order ASC
+        ''',
+        (instance_id,),
+    ).fetchall()
+
+    # Загружаем варианты ответов для каждого вопроса
+    questions = []
+    for row in rows:
+        opts = db.execute(
+            'SELECT option_key, option_text, option_image FROM question_options WHERE question_id = ?',
+            (row['question_id'],),
+        ).fetchall()
+        options = {o['option_key']: dict(o) for o in opts}
+        active_keys = ('a', 'b', 'c', 'd', 'e')[:row['answer_count']]
+        correct_list = row['correct_option'].split(',')
+        questions.append({
+            'order': row['question_order'],
+            'subject_name': row['subject_name'],
+            'subject_id': row['subject_id'],
+            'question_text': row['question_text'],
+            'question_image': row['question_image'],
+            'difficulty': row['difficulty'],
+            'correct_list': correct_list,
+            'active_keys': active_keys,
+            'options': options,
+        })
+
+    # Группируем по предмету
+    subjects_map = {}
+    for q in questions:
+        sid = q['subject_id']
+        if sid not in subjects_map:
+            subjects_map[sid] = {'name': q['subject_name'], 'questions': []}
+        subjects_map[sid]['questions'].append(q)
+
+    db.close()
+    return render_template(
+        'tests/instance_detail.html',
+        instance=instance,
+        subjects=list(subjects_map.values()),
+        all_questions=questions,
+    )
+
+
+@tests_bp.route('/instances/<int:instance_id>/delete', methods=['POST'])
+@login_required
+def instance_delete(instance_id: int):
+    db = get_db_connection()
+    instance = db.execute('SELECT test_id FROM test_instances WHERE id = ?', (instance_id,)).fetchone()
+    if instance:
+        test_id = instance['test_id']
+        db.execute('PRAGMA foreign_keys = ON')
+        db.execute('DELETE FROM test_instances WHERE id = ?', (instance_id,))
+        db.commit()
+        db.close()
+        flash('Экземпляр теста удалён', 'info')
+        return redirect(url_for('tests.instances', test_id=test_id))
+    db.close()
+    flash('Экземпляр не найден', 'danger')
+    return redirect(url_for('tests.index'))

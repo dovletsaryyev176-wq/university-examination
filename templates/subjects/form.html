@@ -12,6 +12,15 @@
                         value="{{ subject.name if subject else '' }}" placeholder="Введите название" required autofocus>
                 </div>
 
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Количество вариантов ответа</label>
+                    <select name="answer_count" class="form-select form-select-lg" required>
+                        {% for n in [2, 3, 4, 5] %}
+                        <option value="{{ n }}" {{ 'selected' if (subject and subject.answer_count == n) or (not subject and n == 4) else '' }}>{{ n }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('subjects.index') }}" class="btn btn-link text-secondary">Отмена</a>
                     <button type="submit" class="btn btn-primary btn-lg px-5">Сохранить</button>

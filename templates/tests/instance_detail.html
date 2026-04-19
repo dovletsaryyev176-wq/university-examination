@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="main-card shadow-sm p-4 bg-white rounded">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <h2 class="h4 mb-0 text-secondary">Ответы к тесту</h2>
+            <div class="text-muted small mt-1">
+                <strong>{{ instance.test_name }}</strong> &nbsp;·&nbsp; {{ instance.created_at }}
+            </div>
+        </div>
+        <a href="{{ url_for('tests.instances', test_id=instance.test_id) }}" class="btn btn-link text-secondary btn-sm">← Назад</a>
+    </div>
+
+    {# Компактная таблица-ключ: все вопросы с правильными ответами #}
+    <div class="border rounded p-3 mb-4 bg-light">
+        <h6 class="mb-2 text-secondary fw-bold">Ключ ответов</h6>
+        <div class="d-flex flex-wrap gap-2">
+            {% for q in all_questions %}
+            <div class="text-center" style="min-width: 52px;">
+                <div class="text-muted small">{{ q.order }}</div>
+                <div>
+                    {% for opt in q.correct_list %}
+                    <span class="badge bg-success">{{ opt.strip()|upper }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# Вопросы по предметам #}
+    {% for subject in subjects %}
+    <div class="mb-5">
+        <h5 class="text-primary border-bottom pb-2 mb-3">{{ subject.name }}</h5>
+
+        {% for q in subject.questions %}
+        <div class="border rounded p-3 mb-3 {{ 'border-success' if q.correct_list else '' }}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="fw-bold text-secondary">#{{ q.order }}</span>
+                <div class="d-flex gap-2">
+                    {% if q.difficulty == 'hard' %}
+                    <span class="badge bg-danger">Сложный</span>
+                    {% else %}
+                    <span class="badge bg-success">Лёгкий</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if q.question_text %}
+            <div class="fw-bold mb-2">{{ q.question_text }}</div>
+            {% endif %}
+
+            {% if q.question_image %}
+            <div class="mb-2">
+                <img src="{{ url_for('static', filename=q.question_image) }}" alt="question"
+                     class="img-thumbnail" style="max-height: 180px; object-fit: cover;">
+            </div>
+            {% endif %}
+
+            <div class="mt-2">
+                {% for k in q.active_keys %}
+                {% set opt = q.options.get(k, {}) %}
+                {% set is_correct = k in q.correct_list %}
+                <div class="d-flex align-items-start gap-2 py-1 px-2 rounded mb-1
+                    {{ 'bg-success bg-opacity-10 border border-success' if is_correct else '' }}">
+                    <span class="fw-bold {{ 'text-success' if is_correct else 'text-muted' }}" style="min-width: 24px;">
+                        {{ k|upper }})
+                    </span>
+                    <div class="flex-grow-1">
+                        {% if opt.get('option_text') %}
+                        <span class="{{ 'fw-semibold text-success' if is_correct else '' }}">
+                            {{ opt.option_text }}
+                        </span>
+                        {% endif %}
+                        {% if opt.get('option_image') %}
+                        <div class="mt-1">
+                            <img src="{{ url_for('static', filename=opt.option_image) }}" alt="option_{{ k }}"
+                                 class="img-thumbnail" style="max-height: 100px; object-fit: cover;">
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if is_correct %}
+                    <span class="text-success fw-bold">✓</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

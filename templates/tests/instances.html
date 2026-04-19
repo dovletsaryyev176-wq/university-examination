@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="main-card shadow-sm p-4 bg-white rounded">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h4 mb-0 text-secondary">Сохранённые ответы</h2>
+            <div class="text-muted small mt-1">Тест: <strong>{{ test.name }}</strong></div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('tests.export_pdf', id=test.id) }}" class="btn btn-outline-secondary btn-sm">
+                ⬇ Сгенерировать PDF
+            </a>
+            <a href="{{ url_for('tests.index') }}" class="btn btn-link text-secondary btn-sm">← Назад</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light text-secondary">
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Дата и время генерации</th>
+                    <th style="width: 140px;" class="text-center">Вопросов</th>
+                    <th class="text-end" style="width: 200px;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inst in instances %}
+                <tr>
+                    <td class="text-muted">{{ inst.id }}</td>
+                    <td>{{ inst.created_at }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-primary">{{ inst.question_count }}</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('tests.instance_detail', instance_id=inst.id) }}"
+                           class="btn btn-sm btn-outline-primary me-1">Просмотр</a>
+                        <form action="{{ url_for('tests.instance_delete', instance_id=inst.id) }}" method="POST"
+                              class="d-inline"
+                              onsubmit="return confirm('Удалить этот экземпляр теста?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">
+                        Нет сохранённых экземпляров. Нажмите «⬇ Сгенерировать PDF» чтобы создать первый.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

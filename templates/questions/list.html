@@ -63,7 +63,9 @@
                     </td>
 
                     <td>
-                        <span class="badge bg-primary">{{ q.correct_option|upper }}</span>
+                        {% for opt in q.correct_option.split(',') %}
+                        <span class="badge bg-primary">{{ opt.strip()|upper }}</span>
+                        {% endfor %}
                     </td>
 
                     <td class="text-end px-4">

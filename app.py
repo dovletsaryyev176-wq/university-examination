@@ -9,6 +9,9 @@ from flask_login import current_user
 from routes.subjects import subjects_bp
 from routes.questions import questions_bp
 from routes.tests import tests_bp
+from routes.classrooms import classrooms_bp
+from routes.students import students_bp
+from routes.exam import exam_bp
 
 
 
@@ -50,6 +53,9 @@ def create_app():
     app.register_blueprint(subjects_bp, url_prefix='/subjects')
     app.register_blueprint(questions_bp, url_prefix='/questions')
     app.register_blueprint(tests_bp, url_prefix='/tests')
+    app.register_blueprint(classrooms_bp, url_prefix='/classrooms')
+    app.register_blueprint(students_bp, url_prefix='/students')
+    app.register_blueprint(exam_bp, url_prefix='/exam')
 
 
     @app.route('/')

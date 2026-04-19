@@ -15,6 +15,7 @@
                 <tr>
                     <th style="width: 80px;">Статус</th>
                     <th>Наименование предмета</th>
+                    <th style="width: 120px;" class="text-center">Вариантов</th>
                     <th class="text-end px-4">Действия</th>
                 </tr>
             </thead>
@@ -33,6 +34,9 @@
                             {{ sub.name }}
                         </span>
                     </td>
+                    <td class="text-center">
+                        <span class="badge bg-info text-dark">{{ sub.answer_count }}</span>
+                    </td>
                     <td class="text-end px-4">
                         <a href="{{ url_for('subjects.edit', id=sub.id) }}" class="btn btn-sm btn-outline-primary me-2">
                             Изм.
@@ -48,7 +52,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="3" class="text-center py-4">Список предметов пуст</td>
+                    <td colspan="4" class="text-center py-4">Список предметов пуст</td>
                 </tr>
                 {% endfor %}
             </tbody>

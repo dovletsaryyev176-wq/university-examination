@@ -72,6 +72,18 @@
                         <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('tests.') }}"
                             href="{{ url_for('tests.index') }}">Тесты</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('classrooms.') }}"
+                            href="{{ url_for('classrooms.index') }}">Классы</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('students.') }}"
+                            href="{{ url_for('students.index') }}">Студенты</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('exam.') }}"
+                            href="{{ url_for('exam.index') }}">Размещение</a>
+                    </li>
                     {% endif %}
                 </ul>
 

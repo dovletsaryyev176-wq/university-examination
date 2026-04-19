@@ -18,12 +18,15 @@ def index():
 def create():
     if request.method == 'POST':
         name = request.form['name'].strip()
+        answer_count = request.form.get('answer_count', 4, type=int)
         if not name:
             flash("Название не может быть пустым", "danger")
+        elif answer_count not in range(2, 6):
+            flash("Количество вариантов ответа должно быть от 2 до 5", "danger")
         else:
             db = get_db_connection()
             try:
-                db.execute('INSERT INTO subjects (name) VALUES (?)', (name,))
+                db.execute('INSERT INTO subjects (name, answer_count) VALUES (?, ?)', (name, answer_count))
                 db.commit()
                 flash(f"Предмет '{name}' добавлен", "success")
                 return redirect(url_for('subjects.index'))
@@ -41,10 +44,11 @@ def edit(id):
 
     if request.method == 'POST':
         name = request.form['name'].strip()
-        db.execute('UPDATE subjects SET name = ? WHERE id = ?', (name, id))
+        answer_count = request.form.get('answer_count', 4, type=int)
+        db.execute('UPDATE subjects SET name = ?, answer_count = ? WHERE id = ?', (name, answer_count, id))
         db.commit()
         db.close()
-        flash("Название предмета обновлено", "success")
+        flash("Предмет обновлён", "success")
         return redirect(url_for('subjects.index'))
 
     db.close()
