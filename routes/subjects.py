@@ -20,18 +20,18 @@ def create():
         name = request.form['name'].strip()
         answer_count = request.form.get('answer_count', 4, type=int)
         if not name:
-            flash("Название не может быть пустым", "danger")
+            flash("Ady boş bolup bilmeýär", "danger")
         elif answer_count not in range(2, 6):
-            flash("Количество вариантов ответа должно быть от 2 до 5", "danger")
+            flash("Jogap görnüş 2-5 arasynda bolmaly", "danger")
         else:
             db = get_db_connection()
             try:
                 db.execute('INSERT INTO subjects (name, answer_count) VALUES (?, ?)', (name, answer_count))
                 db.commit()
-                flash(f"Предмет '{name}' добавлен", "success")
+                flash(f"Ders '{name}' goşulan", "success")
                 return redirect(url_for('subjects.index'))
             except:
-                flash("Такой предмет уже существует", "danger")
+                flash("Bu ders eýýäm bar", "danger")
             finally:
                 db.close()
     return render_template('subjects/form.html', subject=None)
@@ -48,7 +48,7 @@ def edit(id):
         db.execute('UPDATE subjects SET name = ?, answer_count = ? WHERE id = ?', (name, answer_count, id))
         db.commit()
         db.close()
-        flash("Предмет обновлён", "success")
+        flash("Ders üýtgedildi", "success")
         return redirect(url_for('subjects.index'))
 
     db.close()
@@ -62,5 +62,5 @@ def toggle(id):
     db.execute('UPDATE subjects SET is_active = 1 - is_active WHERE id = ?', (id,))
     db.commit()
     db.close()
-    flash("Статус предмета изменен", "info")
+    flash("Dersiň ýagdaýy üýtgedildi", "info")
     return redirect(url_for('subjects.index'))

@@ -3,8 +3,8 @@
 {% block content %}
 <div class="main-card shadow-sm p-4 bg-white rounded">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 mb-0 text-secondary">Размещение на экзамены</h2>
-        <a href="{{ url_for('exam.create') }}" class="btn btn-primary px-4">+ Новое размещение</a>
+        <h2 class="h4 mb-0 text-secondary">Synagda ýerleşdirme</h2>
+        <a href="{{ url_for('exam.create') }}" class="btn btn-primary px-4">+ Täze ýerleşdirme</a>
     </div>
 
     <div class="table-responsive">
@@ -12,11 +12,11 @@
             <thead class="table-light text-secondary">
                 <tr>
                     <th style="width: 50px;">#</th>
-                    <th>Наименование</th>
-                    <th style="width: 120px;" class="text-center">Классов</th>
-                    <th style="width: 120px;" class="text-center">Студентов</th>
-                    <th style="width: 170px;">Дата</th>
-                    <th class="text-end" style="width: 240px;">Действия</th>
+                    <th>Ady</th>
+                    <th style="width: 120px;" class="text-center">Synp sany</th>
+                    <th style="width: 120px;" class="text-center">Dalaşgär sany</th>
+                    <th style="width: 170px;">Sene</th>
+                    <th class="text-end" style="width: 240px;">Amallar</th>
                 </tr>
             </thead>
             <tbody>
@@ -29,19 +29,19 @@
                     <td class="text-muted small">{{ s.created_at }}</td>
                     <td class="text-end">
                         <a href="{{ url_for('exam.detail', id=s.id) }}"
-                           class="btn btn-sm btn-outline-primary me-1">Просмотр</a>
+                           class="btn btn-sm btn-outline-primary me-1">Görmek</a>
                         <a href="{{ url_for('exam.export_pdf', id=s.id) }}"
                            class="btn btn-sm btn-outline-secondary me-1">⬇ PDF</a>
                         <form action="{{ url_for('exam.delete', id=s.id) }}" method="POST"
                               class="d-inline"
-                              onsubmit="return confirm('Удалить размещение «{{ s.name }}»?')">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                              onsubmit="return confirm('Ýerleşdirmäni ýok etmek «{{ s.name }}»?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Ýok etmek</button>
                         </form>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">Нет размещений</td>
+                    <td colspan="6" class="text-center py-4 text-muted">Ýerleşdirme ýok</td>
                 </tr>
                 {% endfor %}
             </tbody>

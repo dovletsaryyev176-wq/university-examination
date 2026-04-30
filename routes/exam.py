@@ -116,9 +116,9 @@ def _generate_pdf(session_name: str, classrooms_data: list) -> bytes:
         pdf.set_text_color(100, 100, 100)
         pdf.cell(
             0, 6,
-            text=(f"Место: {c['location']}   |   "
-                  f"Вместимость: {c['capacity']}   |   "
-                  f"Размещено: {len(sts)}"),
+            text=(f"Ýeri: {c['location']}   |   "
+                  f"Sygýan sany: {c['capacity']}   |   "
+                  f"Ýerleşdirilen: {len(sts)}"),
             align='C', new_x='LMARGIN', new_y='NEXT',
         )
         pdf.set_text_color(0, 0, 0)
@@ -164,11 +164,11 @@ def _generate_pdf(session_name: str, classrooms_data: list) -> bytes:
             pdf.set_text_color(180, 80, 0)
             pdf.multi_cell(
                 0, 5,
-                text=f'* Оранжевым выделены {conflicts} случай(-ев) смежного размещения студентов из одной области.',
+                text=f'* Goýy sary reňk bilen {conflicts} bir welaýatdan dalaşgärleriň ýerleşişi görkezilen.',
             )
         else:
             pdf.set_text_color(0, 140, 0)
-            pdf.cell(0, 5, text='✓ Все студенты из разных областей — конфликтов нет.')
+            pdf.cell(0, 5, text='✓ Hemme dalaşgärler aýry welaýatlardan.')
         pdf.set_text_color(0, 0, 0)
 
     return bytes(pdf.output())
@@ -210,11 +210,11 @@ def create():
 
         errors = []
         if not name:
-            errors.append('Введите название размещения.')
+            errors.append('Ýerleşmäniň adyny giriziň.')
         if not classroom_ids:
-            errors.append('Выберите хотя бы один класс.')
+            errors.append('Iň bolmanda bir synp seçiň.')
         if total_students == 0:
-            errors.append('Нет студентов. Сначала импортируйте список.')
+            errors.append('Dalaşgär ýok, sanawy giriziň.')
 
         selected_rooms = []
         if not errors:
@@ -226,8 +226,8 @@ def create():
             total_capacity = sum(c['capacity'] for c in selected_rooms)
             if total_capacity < total_students:
                 errors.append(
-                    f'Недостаточно мест: выбранная вместимость {total_capacity}, '
-                    f'а студентов {total_students}. Добавьте ещё классы.'
+                    f'Ýer azlyk edýär: saýlanan sygym {total_capacity}, '
+                    f'dalaşgär bolsa - {total_students}. Täze synp goşuň.'
                 )
 
         if errors:
@@ -268,7 +268,7 @@ def create():
         db.commit()
         db.close()
 
-        flash(f'Размещение «{name}» создано — {len(placements)} студентов распределено', 'success')
+        flash(f'Ýerleşdirme «{name}» döredilen — {len(placements)} dalaşgär ýerleşdirilen', 'success')
         return redirect(url_for('exam.detail', id=session_id))
 
     db.close()
@@ -325,7 +325,7 @@ def detail(id: int):
     session = db.execute('SELECT * FROM exam_sessions WHERE id = ?', (id,)).fetchone()
     if not session:
         db.close()
-        flash('Размещение не найдено', 'danger')
+        flash('Ýerleşdirme tapylmady', 'danger')
         return redirect(url_for('exam.index'))
 
     classrooms_data = _load_classrooms_data(db, id)
@@ -347,7 +347,7 @@ def export_pdf(id: int):
     session = db.execute('SELECT * FROM exam_sessions WHERE id = ?', (id,)).fetchone()
     if not session:
         db.close()
-        flash('Размещение не найдено', 'danger')
+        flash('Ýerleşdirme tapylmady', 'danger')
         return redirect(url_for('exam.index'))
 
     classrooms_data = _load_classrooms_data(db, id)
@@ -375,5 +375,5 @@ def delete(id: int):
     db.execute('DELETE FROM exam_sessions WHERE id = ?', (id,))
     db.commit()
     db.close()
-    flash('Размещение удалено', 'info')
+    flash('Ýerleşdirme ýok edildi', 'info')
     return redirect(url_for('exam.index'))

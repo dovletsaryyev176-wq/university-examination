@@ -3,9 +3,9 @@
 {% block content %}
 <div class="main-card shadow-sm p-4 bg-white rounded">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 mb-0 text-secondary">Классы</h2>
+        <h2 class="h4 mb-0 text-secondary">Synplar</h2>
         <a href="{{ url_for('classrooms.create') }}" class="btn btn-primary px-4">
-            + Добавить класс
+            + Täze synp
         </a>
     </div>
 
@@ -13,11 +13,11 @@
         <table class="table align-middle">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 80px;">Статус</th>
-                    <th>Наименование</th>
-                    <th>Место размещения</th>
-                    <th style="width: 130px;" class="text-center">Вместимость</th>
-                    <th class="text-end px-4">Действия</th>
+                    <th style="width: 80px;">Ýagdaýy</th>
+                    <th>Ady</th>
+                    <th>Ýerleşýän ýeri</th>
+                    <th style="width: 130px;" class="text-center">Sygýan sany</th>
+                    <th class="text-end px-4">Amallar</th>
                 </tr>
             </thead>
             <tbody>
@@ -25,9 +25,9 @@
                 <tr class="{{ 'table-light opacity-50' if not c.is_active else '' }}">
                     <td>
                         {% if c.is_active %}
-                        <span class="badge bg-success">Активен</span>
+                        <span class="badge bg-success">Aktiw</span>
                         {% else %}
-                        <span class="badge bg-secondary">Заблокирован</span>
+                        <span class="badge bg-secondary">Bloklanan</span>
                         {% endif %}
                     </td>
                     <td>
@@ -37,28 +37,28 @@
                     </td>
                     <td class="text-muted">{{ c.location }}</td>
                     <td class="text-center">
-                        <span class="badge bg-info text-dark">{{ c.capacity }} чел.</span>
+                        <span class="badge bg-info text-dark">{{ c.capacity }} adam</span>
                     </td>
                     <td class="text-end px-4">
                         <a href="{{ url_for('classrooms.edit', id=c.id) }}"
-                           class="btn btn-sm btn-outline-primary me-1">Изм.</a>
+                           class="btn btn-sm btn-outline-primary me-1">Üýtgetmek</a>
 
                         <form action="{{ url_for('classrooms.toggle', id=c.id) }}" method="POST" class="d-inline">
                             <button type="submit"
                                 class="btn btn-sm {{ 'btn-outline-danger' if c.is_active else 'btn-outline-success' }}">
-                                {{ 'Заблокировать' if c.is_active else 'Разблокировать' }}
+                                {{ 'Bloklamak' if c.is_active else 'Açmak' }}
                             </button>
                         </form>
 
                         <form action="{{ url_for('classrooms.delete', id=c.id) }}" method="POST" class="d-inline"
-                              onsubmit="return confirm('Удалить класс «{{ c.name }}»?')">
-                            <button type="submit" class="btn btn-sm btn-outline-danger ms-1">Удалить</button>
+                              onsubmit="return confirm('Synpy ýok etmek «{{ c.name }}»?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger ms-1">Ýok etmek</button>
                         </form>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="text-center py-4 text-muted">Список классов пуст</td>
+                    <td colspan="5" class="text-center py-4 text-muted">Synplaryň sanawy boş</td>
                 </tr>
                 {% endfor %}
             </tbody>

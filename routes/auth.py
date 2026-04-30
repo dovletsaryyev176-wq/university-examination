@@ -26,7 +26,7 @@ def login():
             login_user(user_obj)
             return redirect(url_for('users.index'))
         
-        flash('Неверный логин или пароль')
+        flash('Nädogry ulanyjy ady ýa-da gizlin belgisi')
     return render_template('auth/login.html')
 
 @auth_bp.route('/logout')

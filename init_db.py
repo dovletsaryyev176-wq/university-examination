@@ -16,14 +16,14 @@ def init_db():
         hashed_pw = generate_password_hash('admin123')
         cursor.execute(
             "INSERT INTO users (full_name, username, password) VALUES (?, ?, ?)",
-            ('Системный Администратор', 'admin', hashed_pw)
+            ('Ulgam Administratory', 'admin', hashed_pw)
         )
         conn.commit()
-        print("База обновлена, пользователь 'admin' создан.")
+        print("Maglumat toplumy täzelenen, admin ulanyjy döredilen.")
     else:
-        print("База уже готова, пользователь 'admin' уже существует.")
+        print("Maglumat toplumy taýyn, admin ulanyjy eýýäm bar.")
     
     conn.close()
 
 if __name__ == '__main__':
-    init_db()
+    init_db()

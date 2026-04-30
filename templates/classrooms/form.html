@@ -4,32 +4,32 @@
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="main-card shadow-sm p-4 bg-white rounded">
-            <h3 class="mb-4">{{ 'Редактировать' if classroom else 'Новый' }} класс</h3>
+            <h3 class="mb-4">{{ 'Üýtgetmek' if classroom else 'Täze' }} класс</h3>
             <form method="POST">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Наименование</label>
+                    <label class="form-label fw-bold">Ady</label>
                     <input type="text" name="name" class="form-control form-control-lg"
                         value="{{ classroom.name if classroom else '' }}"
-                        placeholder="Например: Аудитория 101" required autofocus>
+                        placeholder="Mysal üçin: Otag 101" required autofocus>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Место размещения</label>
+                    <label class="form-label fw-bold">Ýerleşýän ýeri</label>
                     <input type="text" name="location" class="form-control form-control-lg"
                         value="{{ classroom.location if classroom else '' }}"
-                        placeholder="Например: Корпус А, 1 этаж" required>
+                        placeholder="Mysal üçin: Bina A, 1-nji gat" required>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Вместимость (чел.)</label>
+                    <label class="form-label fw-bold">Sygýan sany (adam)</label>
                     <input type="number" name="capacity" class="form-control form-control-lg"
                         value="{{ classroom.capacity if classroom else '' }}"
-                        placeholder="Например: 30" min="1" required>
+                        placeholder="Mysal üçin: 30" min="1" required>
                 </div>
 
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('classrooms.index') }}" class="btn btn-link text-secondary">Отмена</a>
-                    <button type="submit" class="btn btn-primary btn-lg px-5">Сохранить</button>
+                    <a href="{{ url_for('classrooms.index') }}" class="btn btn-link text-secondary">Gaýtarmak</a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Ýatda saklamak</button>
                 </div>
             </form>
         </div>

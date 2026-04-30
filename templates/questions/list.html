@@ -3,9 +3,9 @@
 {% block content %}
 <div class="main-card shadow-sm p-4 bg-white rounded">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 mb-0 text-secondary">Вопросы</h2>
+        <h2 class="h4 mb-0 text-secondary">Soraglar</h2>
         <a href="{{ url_for('questions.create') }}" class="btn btn-primary px-4">
-            + Добавить вопрос
+            + Täze sorag
         </a>
     </div>
 
@@ -13,12 +13,12 @@
         <table class="table table-hover align-middle">
             <thead class="table-light text-secondary">
                 <tr>
-                    <th style="width: 90px;">Статус</th>
-                    <th style="width: 180px;">Предмет</th>
-                    <th>Вопрос</th>
-                    <th style="width: 110px;">Сложность</th>
-                    <th style="width: 140px;">Правильный</th>
-                    <th class="text-end px-4" style="width: 220px;">Действия</th>
+                    <th style="width: 90px;">Ýagdaýy</th>
+                    <th style="width: 180px;">Ders</th>
+                    <th>Sorag</th>
+                    <th style="width: 110px;">Agyrlygy</th>
+                    <th style="width: 140px;">Dogry jogap</th>
+                    <th class="text-end px-4" style="width: 220px;">Amallar</th>
                 </tr>
             </thead>
             <tbody>
@@ -26,9 +26,9 @@
                 <tr class="{{ 'table-light opacity-50' if not q.is_active else '' }}">
                     <td>
                         {% if q.is_active %}
-                        <span class="badge bg-success">Активен</span>
+                        <span class="badge bg-success">Aktiw</span>
                         {% else %}
-                        <span class="badge bg-secondary">Заблокирован</span>
+                        <span class="badge bg-secondary">Bloklanan</span>
                         {% endif %}
                     </td>
 
@@ -44,11 +44,11 @@
                             {% endif %}
                             <div>
                                 {% if q.question_text %}
-                                <div class="fw-bold">
-                                    {{ q.question_text|truncate(90, true, '...') }}
+                                <div class="fw-bold" style="max-height:4.5em; overflow:hidden;">
+                                    {{ q.question_text }}
                                 </div>
                                 {% else %}
-                                <div class="fw-bold text-muted">— только фото</div>
+                                <div class="fw-bold text-muted">— diňe surat</div>
                                 {% endif %}
                             </div>
                         </div>
@@ -56,9 +56,9 @@
 
                     <td>
                         {% if q.difficulty == 'hard' %}
-                        <span class="badge bg-danger">Сложный</span>
+                        <span class="badge bg-danger">Çylşyrymly</span>
                         {% else %}
-                        <span class="badge bg-success">Лёгкий</span>
+                        <span class="badge bg-success">Ýönekeý</span>
                         {% endif %}
                     </td>
 
@@ -70,20 +70,20 @@
 
                     <td class="text-end px-4">
                         <a href="{{ url_for('questions.edit', id=q.id) }}" class="btn btn-sm btn-outline-primary me-2">
-                            Изм.
+                            Üýtgetmek
                         </a>
 
                         <form action="{{ url_for('questions.toggle', id=q.id) }}" method="POST" class="d-inline">
                             <button type="submit"
                                 class="btn btn-sm {{ 'btn-outline-danger' if q.is_active else 'btn-outline-success' }}">
-                                {{ 'Заблокировать' if q.is_active else 'Разблокировать' }}
+                                {{ 'Bloklamak' if q.is_active else 'Blokdan açmak' }}
                             </button>
                         </form>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">Список вопросов пуст</td>
+                    <td colspan="6" class="text-center py-4 text-muted">Sorag sanawy boş</td>
                 </tr>
                 {% endfor %}
             </tbody>

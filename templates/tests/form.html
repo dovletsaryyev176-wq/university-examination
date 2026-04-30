@@ -4,21 +4,21 @@
 <div class="row justify-content-center">
     <div class="col-lg-10">
         <div class="main-card shadow-sm p-4 bg-white rounded">
-            <h3 class="mb-4">{{ 'Редактировать тест' if test else 'Новый тест' }}</h3>
+            <h3 class="mb-4">{{ 'Testi üýtgetmek' if test else 'Täze test' }}</h3>
 
             <form method="POST" id="test-form" novalidate>
 
-                {# ── Основные поля ─────────────────────────────────────────── #}
+                {# ── Esasy maglumatlary ─────────────────────────────────────────── #}
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Наименование теста</label>
+                    <label class="form-label fw-bold">Testiň ady</label>
                     <input type="text" name="name" class="form-control form-control-lg"
-                           placeholder="Например: Итоговый тест по математике"
+                           placeholder="Mysal üçin: Iňlis dili boýunça test"
                            value="{{ draft.name }}" required>
                 </div>
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold">Общее кол-во вопросов</label>
+                        <label class="form-label fw-bold">Umumy sorag sany</label>
                         <input type="number" name="total_questions" id="totalQuestionsInput"
                                class="form-control form-control-lg"
                                value="{{ draft.total_questions }}"
@@ -26,9 +26,9 @@
                     </div>
                     <div class="col-md-8">
                         <label class="form-label fw-bold">
-                            Доля лёгких вопросов:
+                            Ýönekeý soraglaryň göterimi:
                             <span id="easyPercentVal" class="text-success fw-bold">{{ draft.easy_percent }}%</span>
-                            &nbsp;/&nbsp; Сложных:
+                            &nbsp;/&nbsp; Çylşyrymly:
                             <span id="hardPercentVal" class="text-danger fw-bold">{{ 100 - draft.easy_percent }}%</span>
                         </label>
                         <div class="d-flex align-items-center gap-3">
@@ -40,28 +40,28 @@
                             <span class="text-danger small">100%</span>
                         </div>
                         <div class="d-flex justify-content-between mt-1">
-                            <small class="text-success">← Лёгкие</small>
-                            <small class="text-danger">Сложные →</small>
+                            <small class="text-success">← Ýönekeý</small>
+                            <small class="text-danger">Çylşyrymly →</small>
                         </div>
                     </div>
                 </div>
 
-                {# ── Предметы ──────────────────────────────────────────────── #}
+                {# ── Dersler ──────────────────────────────────────────────── #}
                 <div class="mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0 text-secondary">Предметы и количество вопросов</h5>
+                        <h5 class="mb-0 text-secondary">Dersler we sorag sanlary</h5>
                         <button type="button" id="addSubjectBtn" class="btn btn-outline-primary btn-sm px-3">
-                            + Добавить предмет
+                            + Täze ders goşmak
                         </button>
                     </div>
 
                     {# Счётчик #}
                     <div class="alert alert-light border py-2 px-3 mb-3 d-flex justify-content-between align-items-center" id="sumAlert">
                         <span>
-                            Сумма по предметам:
+                            Dersler boýunça jemi:
                             <strong id="sumDisplay">0</strong>
                             &nbsp;/&nbsp;
-                            Всего: <strong id="totalDisplay">{{ draft.total_questions or 0 }}</strong>
+                            Jemi: <strong id="totalDisplay">{{ draft.total_questions or 0 }}</strong>
                         </span>
                         <span id="sumStatus" class="badge bg-secondary">—</span>
                     </div>
@@ -71,19 +71,19 @@
                     </div>
 
                     <div id="noSubjectsMsg" class="text-muted text-center py-3" style="display:none;">
-                        Нажмите «+ Добавить предмет» чтобы начать
+                        Başlamak üçin «+ Ders goşmak» basyň
                     </div>
                     <div id="remainingHint" class="text-muted small mt-1" style="display:none;">
-                        Нажмите «+ Добавить предмет» чтобы распределить оставшиеся вопросы по другим предметам.
+                        Galan soraglary başga dersler bölmek üçin «+ Ders goşmak» basyň.
                     </div>
                 </div>
 
-                {# ── Кнопки ────────────────────────────────────────────────── #}
+                {# ── Düwmeler ────────────────────────────────────────────────── #}
                 <div class="d-flex justify-content-between align-items-center mt-4">
                     <a href="{{ url_for('tests.index') }}" class="btn btn-link text-secondary text-decoration-none">
-                        Отмена
+                        Gaýtarmak
                     </a>
-                    <button type="submit" class="btn btn-primary btn-lg px-5">Сохранить</button>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Ýatda saklamak</button>
                 </div>
 
             </form>
@@ -121,20 +121,20 @@ function createRow(subjectId, count) {
         <div class="row g-2 align-items-center">
             <div class="col">
                 <select name="subject_id" class="form-select subject-select" required>
-                    <option value="">— выберите предмет —</option>
+                    <option value="">— ders seçiň —</option>
                     ${buildSelectOptions(subjectId)}
                 </select>
             </div>
             <div class="col-auto" style="width:190px;">
                 <div class="input-group">
-                    <span class="input-group-text text-muted small">Вопросов</span>
+                    <span class="input-group-text text-muted small">Sorag sany</span>
                     <input type="number" name="question_count"
                            class="form-control question-count-input"
                            min="1" value="${count || ''}" required placeholder="0">
                 </div>
             </div>
             <div class="col-auto">
-                <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn" title="Убрать">✕</button>
+                <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn" title="Aýyrmak">✕</button>
             </div>
         </div>
         <div class="stats-info small mt-1 ps-1"></div>`;
@@ -156,7 +156,7 @@ async function fetchStats(row) {
         const resp = await fetch(`/tests/api/subject-stats?subject_id=${subjectId}&easy_percent=${ep}`);
         data = await resp.json();
     } catch (err) {
-        statsDiv.innerHTML = '<span class="text-muted">Ошибка загрузки статистики</span>';
+        statsDiv.innerHTML = '<span class="text-muted">Statistika ýüklemede ýalňyş</span>';
         return;
     }
 
@@ -170,17 +170,17 @@ async function fetchStats(row) {
     const countOk = count > 0 ? (count <= maxFeasible) : true;
 
     let html = `<span class="text-muted">
-        Активных вопросов — лёгких: <strong>${data.easy_available}</strong>,
-        сложных: <strong>${data.hard_available}</strong> &nbsp;|&nbsp;
-        Макс. для ${ep}%/${100-ep}%: <strong class="${maxFeasible === 0 ? 'text-danger' : 'text-success'}">${maxFeasible}</strong>
+        Aktiw soraglar — ýönekeý: <strong>${data.easy_available}</strong>,
+        çylşyrymly: <strong>${data.hard_available}</strong> &nbsp;|&nbsp;
+        Maksimal ${ep}%/${100-ep}%: <strong class="${maxFeasible === 0 ? 'text-danger' : 'text-success'}">${maxFeasible}</strong>
     </span>`;
 
     if (count > 0 && !countOk) {
         let detail = '';
-        if (!easyOk) detail += ` лёгких нужно ${easyNeed}, доступно ${data.easy_available};`;
-        if (!hardOk)  detail += ` сложных нужно ${hardNeed}, доступно ${data.hard_available};`;
+        if (!easyOk) detail += ` ýönekeý gerek ${easyNeed}, bar bolan ${data.easy_available};`;
+        if (!hardOk)  detail += ` çylşyrymly gerek ${hardNeed}, bar bolan ${data.hard_available};`;
         html += `<br><span class="text-danger fw-semibold">
-            ⚠ Нельзя сгенерировать ${count} вопросов при данном соотношении (макс: ${maxFeasible}).${detail}
+            ⚠  ${count} sorag döredip bolmaýar, görkezilen böleklere görä (maksimum: ${maxFeasible}).${detail}
         </span>`;
 
         row.querySelector('.question-count-input').classList.add('is-invalid');
@@ -212,15 +212,15 @@ function updateSum() {
         badge.className = 'badge bg-secondary';
         alertEl.className = 'alert alert-light border py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
     } else if (sum === total) {
-        badge.textContent = '✓ Верно';
+        badge.textContent = '✓ Dogry';
         badge.className = 'badge bg-success';
         alertEl.className = 'alert alert-success py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
     } else if (sum < total) {
-        badge.textContent = `Ещё нужно ${total - sum}`;
+        badge.textContent = `Ýene zerur ${total - sum}`;
         badge.className = 'badge bg-warning text-dark';
         alertEl.className = 'alert alert-warning py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
     } else {
-        badge.textContent = `Лишних ${sum - total}`;
+        badge.textContent = `Artyk ${sum - total}`;
         badge.className = 'badge bg-danger';
         alertEl.className = 'alert alert-danger py-2 px-3 mb-3 d-flex justify-content-between align-items-center';
     }
@@ -273,7 +273,7 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
     const rows = document.querySelectorAll('.subject-row');
     if (rows.length === 0) {
         e.preventDefault();
-        alert('Добавьте хотя бы один предмет.');
+        alert('Bolmanda bir ders goşuň.');
         return;
     }
     const total = parseInt(document.getElementById('totalQuestionsInput').value) || 0;
@@ -285,9 +285,9 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const diff = total - sum;
         if (diff > 0) {
-            alert(`Ещё нужно распределить ${diff} вопросов.\n\nНажмите «+ Добавить предмет», чтобы добавить ещё один предмет с оставшимися вопросами.`);
+            alert(`Ýene ${diff} soragy ýerleşdirmeli.\n\nНGalan soraglar üçin ýene ders goşmak üçin  «+ Ders goşmak»,.`);
         } else {
-            alert(`Вопросов указано лишних: ${-diff}. Уменьшите количество в одном из предметов.`);
+            alert(`Artyk sorag sany: ${-diff}. Dersleriň islendiginde sorag sany azaldyň.`);
         }
         return;
     }
@@ -295,7 +295,7 @@ document.getElementById('test-form').addEventListener('submit', function(e) {
     const invalidInputs = document.querySelectorAll('.question-count-input.is-invalid');
     if (invalidInputs.length > 0) {
         e.preventDefault();
-        alert('Невозможно сохранить тест: для некоторых предметов недостаточно активных вопросов. Исправьте количество или разблокируйте вопросы.');
+        alert('Testi ýatda saklap bolmaýar, käbir derslerde aktiw sorag ýetmeýär. Sanyny düzediň ýa-da soraglary blokdan açyň.');
         return;
     }
 });

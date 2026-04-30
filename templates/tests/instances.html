@@ -4,14 +4,14 @@
 <div class="main-card shadow-sm p-4 bg-white rounded">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="h4 mb-0 text-secondary">Сохранённые ответы</h2>
-            <div class="text-muted small mt-1">Тест: <strong>{{ test.name }}</strong></div>
+            <h2 class="h4 mb-0 text-secondary">Ýatda saklanan jogaplar</h2>
+            <div class="text-muted small mt-1">Test: <strong>{{ test.name }}</strong></div>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ url_for('tests.export_pdf', id=test.id) }}" class="btn btn-outline-secondary btn-sm">
-                ⬇ Сгенерировать PDF
+                ⬇ PDF ýasamak
             </a>
-            <a href="{{ url_for('tests.index') }}" class="btn btn-link text-secondary btn-sm">← Назад</a>
+            <a href="{{ url_for('tests.index') }}" class="btn btn-link text-secondary btn-sm">← Yza</a>
         </div>
     </div>
 
@@ -20,9 +20,9 @@
             <thead class="table-light text-secondary">
                 <tr>
                     <th style="width: 60px;">#</th>
-                    <th>Дата и время генерации</th>
-                    <th style="width: 140px;" class="text-center">Вопросов</th>
-                    <th class="text-end" style="width: 200px;">Действия</th>
+                    <th>Taýýarlanan senesi we wagy</th>
+                    <th style="width: 140px;" class="text-center">Sorag sany</th>
+                    <th class="text-end" style="width: 200px;">Amallar</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,18 +35,18 @@
                     </td>
                     <td class="text-end">
                         <a href="{{ url_for('tests.instance_detail', instance_id=inst.id) }}"
-                           class="btn btn-sm btn-outline-primary me-1">Просмотр</a>
+                           class="btn btn-sm btn-outline-primary me-1">Görmek</a>
                         <form action="{{ url_for('tests.instance_delete', instance_id=inst.id) }}" method="POST"
                               class="d-inline"
-                              onsubmit="return confirm('Удалить этот экземпляр теста?')">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                              onsubmit="return confirm('Testi ýok etmek?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Ýok etmek</button>
                         </form>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
                     <td colspan="4" class="text-center py-4 text-muted">
-                        Нет сохранённых экземпляров. Нажмите «⬇ Сгенерировать PDF» чтобы создать первый.
+                        Ýatda saklanan ýok.  «⬇ PDF ýasamak» düwmesini basyň.
                     </td>
                 </tr>
                 {% endfor %}

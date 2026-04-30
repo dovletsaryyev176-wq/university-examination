@@ -136,8 +136,10 @@ def import_excel():
 @login_required
 def clear():
     db = get_db_connection()
+    db.execute('PRAGMA foreign_keys = ON')
+    db.execute('DELETE FROM exam_sessions')
     db.execute('DELETE FROM students')
     db.commit()
     db.close()
-    flash('Список студентов очищен', 'info')
+    flash('Список студентов и все размещения очищены', 'info')
     return redirect(url_for('students.index'))

@@ -6,9 +6,9 @@
         <div class="main-card shadow-sm p-4 bg-white rounded border">
             <h3 class="mb-4 text-primary">
                 {% if user %}
-                <i class="bi bi-pencil-square"></i> Редактировать данные
+                <i class="bi bi-pencil-square"></i> Maglumatlaty üýtgetmek
                 {% else %}
-                <i class="bi bi-person-plus-fill"></i> Новый пользователь
+                <i class="bi bi-person-plus-fill"></i> Täze ulanyjy
                 {% endif %}
             </h3>
 
@@ -16,36 +16,36 @@
 
             <form method="POST">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Полное имя (ФИО)</label>
+                    <label class="form-label fw-bold">Doly ady(FAA)</label>
                     <input type="text" name="full_name" class="form-control form-control-lg"
-                        placeholder="Напр: Иванов Иван Иванович" value="{{ user.full_name if user else '' }}" required>
+                        placeholder="Mysal üçin : Belliýew Belli Belliýewiç" value="{{ user.full_name if user else '' }}" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Имя пользователя (Логин)</label>
-                    <input type="text" name="username" class="form-control" placeholder="Напр: ivanov_i"
+                    <label class="form-label fw-bold">Ulanyjy ady</label>
+                    <input type="text" name="username" class="form-control" placeholder="Mysal üçin: belliyev_b"
                         value="{{ user.username if user else '' }}" required>
-                    <div class="form-text">Этот логин будет использоваться для входа в систему.</div>
+                    <div class="form-text">Ulgama girmek üçin bu ulanyjy ady ulanylar.</div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Пароль</label>
+                    <label class="form-label fw-bold">Gizlin belgi</label>
                     <input type="password" name="password" class="form-control" placeholder="••••••••" {% if not user
                         %}required{% endif %}>
 
                     {% if user %}
                     <div class="alert alert-info mt-2 py-2 small">
-                        <i class="bi bi-info-circle"></i> Оставьте поле пустым, если не хотите менять текущий пароль.
+                        <i class="bi bi-info-circle"></i> Üýtgetmek islemeseňiz, boş goýuň.
                     </div>
                     {% endif %}
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-5">
                     <a href="{{ url_for('users.index') }}" class="btn btn-link text-secondary text-decoration-none">
-                        <i class="bi bi-arrow-left"></i> Назад к списку
+                        <i class="bi bi-arrow-left"></i> Sanawa gaýtmak
                     </a>
                     <button type="submit" class="btn btn-success btn-lg px-5">
-                        {{ 'Сохранить изменения' if user else 'Создать пользователя' }}
+                        {{ 'Üýtgeşmeleri ýatda saklamak' if user else 'Ulanyjy döretmek' }}
                     </button>
                 </div>
             </form>

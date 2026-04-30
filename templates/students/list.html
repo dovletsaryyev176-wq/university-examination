@@ -4,20 +4,20 @@
 <div class="main-card shadow-sm p-4 bg-white rounded">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="h4 mb-0 text-secondary">Студенты</h2>
-            <div class="text-muted small mt-1">Всего: <strong>{{ students|length }}</strong></div>
+            <h2 class="h4 mb-0 text-secondary">Dalaşgärler</h2>
+            <div class="text-muted small mt-1">Jemi: <strong>{{ students|length }}</strong></div>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
             <form method="POST" action="{{ url_for('students.import_excel') }}"
                   enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
                 <input type="file" name="file" class="form-control form-control-sm"
                        accept=".xlsx,.xls" required style="max-width: 240px;">
-                <button type="submit" class="btn btn-primary btn-sm px-3">Импорт Excel</button>
+                <button type="submit" class="btn btn-primary btn-sm px-3">Excelden okamak</button>
             </form>
             {% if students %}
             <form method="POST" action="{{ url_for('students.clear') }}"
-                  onsubmit="return confirm('Удалить всех студентов?')">
-                <button type="submit" class="btn btn-outline-danger btn-sm">Очистить</button>
+                  onsubmit="return confirm('Hemme dalaşgärleri ýok etmek?')">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Arassalamak</button>
             </form>
             {% endif %}
         </div>
@@ -25,7 +25,7 @@
 
     {% if region_stats %}
     <div class="mb-4">
-        <h6 class="text-secondary mb-2 small fw-bold text-uppercase">Распределение по областям</h6>
+        <h6 class="text-secondary mb-2 small fw-bold text-uppercase">Welaýatlar boýunça</h6>
         <div class="d-flex flex-wrap gap-2">
             {% for r in region_stats %}
             <span class="badge bg-light text-dark border px-3 py-2">
@@ -41,11 +41,11 @@
         <table class="table table-sm table-hover align-middle">
             <thead class="table-light text-secondary">
                 <tr>
-                    <th style="width: 90px;">Номер</th>
-                    <th>Фамилия</th>
-                    <th>Имя</th>
-                    <th>Отчество</th>
-                    <th>Область</th>
+                    <th style="width: 90px;">Belgisi</th>
+                    <th>Familiýasy</th>
+                    <th>Ady</th>
+                    <th>Atasynyň ady</th>
+                    <th>Welaýaty</th>
                 </tr>
             </thead>
             <tbody>
@@ -63,10 +63,10 @@
     </div>
     {% else %}
     <div class="text-center py-5 text-muted">
-        <div class="mb-2 fw-bold">Список студентов пуст</div>
+        <div class="mb-2 fw-bold">Dalaşgärleriň sanawy boş</div>
         <div class="small">
-            Импортируйте файл Excel (.xlsx/.xls).<br>
-            Первая строка — заголовки: <strong>Номер, Фамилия, Имя, Отчество, Область</strong>
+            Excelden okamak (.xlsx/.xls).<br>
+            Ilkinji setir — sütün atlary: <strong>Номер, Фамилия, Имя, Отчество, Область</strong>
         </div>
     </div>
     {% endif %}

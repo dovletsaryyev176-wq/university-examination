@@ -26,11 +26,11 @@ def create():
             capacity = 0
 
         if not name:
-            flash('Наименование не может быть пустым', 'danger')
+            flash('Ady boş bolup bilmeýär', 'danger')
         elif not location:
-            flash('Место размещения не может быть пустым', 'danger')
+            flash('Ýerleşme ýeri boş bolup bilmeýär', 'danger')
         elif capacity <= 0:
-            flash('Вместимость должна быть больше 0', 'danger')
+            flash('Sygýan sany 0-dan uly bolmaly', 'danger')
         else:
             db = get_db_connection()
             try:
@@ -39,10 +39,10 @@ def create():
                     (name, location, capacity),
                 )
                 db.commit()
-                flash(f"Класс «{name}» добавлен", 'success')
+                flash(f"Synp «{name}» goşuldy", 'success')
                 return redirect(url_for('classrooms.index'))
             except Exception:
-                flash('Класс с таким наименованием уже существует', 'danger')
+                flash('Bu atly synp bar', 'danger')
             finally:
                 db.close()
     return render_template('classrooms/form.html', classroom=None)
@@ -55,7 +55,7 @@ def edit(id):
     classroom = db.execute('SELECT * FROM classrooms WHERE id = ?', (id,)).fetchone()
     if not classroom:
         db.close()
-        flash('Класс не найден', 'danger')
+        flash('Synp tapylmady', 'danger')
         return redirect(url_for('classrooms.index'))
 
     if request.method == 'POST':
@@ -67,11 +67,11 @@ def edit(id):
             capacity = 0
 
         if not name:
-            flash('Наименование не может быть пустым', 'danger')
+            flash('Ady boş bolup bilmeýär', 'danger')
         elif not location:
-            flash('Место размещения не может быть пустым', 'danger')
+            flash('Ýerleşýän ýeri boş bolup bilmeýär', 'danger')
         elif capacity <= 0:
-            flash('Вместимость должна быть больше 0', 'danger')
+            flash('Sygýan sany 0-dan uly bolmaly', 'danger')
         else:
             db.execute(
                 'UPDATE classrooms SET name = ?, location = ?, capacity = ? WHERE id = ?',
@@ -93,7 +93,7 @@ def toggle(id):
     db.execute('UPDATE classrooms SET is_active = 1 - is_active WHERE id = ?', (id,))
     db.commit()
     db.close()
-    flash('Статус класса изменён', 'info')
+    flash('Synpyň ýagdaýy üýtgedildi', 'info')
     return redirect(url_for('classrooms.index'))
 
 
@@ -105,6 +105,6 @@ def delete(id):
     if classroom:
         db.execute('DELETE FROM classrooms WHERE id = ?', (id,))
         db.commit()
-        flash(f"Класс «{classroom['name']}» удалён", 'info')
+        flash(f"Synp «{classroom['name']}» ýok edildi", 'info')
     db.close()
     return redirect(url_for('classrooms.index'))

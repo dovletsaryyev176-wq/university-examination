@@ -3,9 +3,9 @@
 {% block content %}
 <div class="main-card shadow-sm p-4 bg-white rounded">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 mb-0">Список сотрудников</h2>
+        <h2 class="h4 mb-0">Ulanyjylaryň sanawy</h2>
         <a href="{{ url_for('users.create') }}" class="btn btn-primary px-4">
-            <i class="bi bi-person-plus"></i> + Добавить нового
+            <i class="bi bi-person-plus"></i> + Täze ulanyjy goşmak
         </a>
     </div>
 
@@ -14,9 +14,9 @@
             <thead class="table-light text-secondary">
                 <tr>
                     <th style="width: 50px;">ID</th>
-                    <th>ФИО пользователя</th>
-                    <th>Имя пользователя (Логин)</th>
-                    <th class="text-end px-4">Действия</th>
+                    <th>Ulanyjynyň doly ady(FAA)</th>
+                    <th>Ulanyjy ady</th>
+                    <th class="text-end px-4">Amallar</th>
                 </tr>
             </thead>
             <tbody>
@@ -27,13 +27,13 @@
                     <td><code class="text-primary">{{ user.username }}</code></td>
                     <td class="text-end px-4">
                         <a href="{{ url_for('users.edit', id=user.id) }}" class="btn btn-sm btn-outline-warning me-1">
-                            Изменить
+                            Üýtgetmek
                         </a>
 
                         <form action="{{ url_for('users.delete', id=user.id) }}" method="POST" class="d-inline">
                             <button type="submit" class="btn btn-sm btn-outline-danger"
-                                onclick="return confirm('Вы уверены, что хотите безвозвратно удалить этого пользователя?')">
-                                Удалить
+                                onclick="return confirm('Ulanyjyny ýok etmelimi?')">
+                                Ýok etmek
                             </button>
                         </form>
                     </td>
@@ -41,7 +41,7 @@
                 {% else %}
                 <tr>
                     <td colspan="4" class="text-center py-4 text-muted">
-                        Пользователей пока нет. Нажмите "Добавить", чтобы создать первого.
+                        Heniz ulanyjy ýok.
                     </td>
                 </tr>
                 {% endfor %}

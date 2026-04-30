@@ -4,17 +4,17 @@
 <div class="main-card shadow-sm p-4 bg-white rounded">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
-            <h2 class="h4 mb-0 text-secondary">Ответы к тесту</h2>
+            <h2 class="h4 mb-0 text-secondary">Testa jogaplar</h2>
             <div class="text-muted small mt-1">
                 <strong>{{ instance.test_name }}</strong> &nbsp;·&nbsp; {{ instance.created_at }}
             </div>
         </div>
-        <a href="{{ url_for('tests.instances', test_id=instance.test_id) }}" class="btn btn-link text-secondary btn-sm">← Назад</a>
+        <a href="{{ url_for('tests.instances', test_id=instance.test_id) }}" class="btn btn-link text-secondary btn-sm">← Yza</a>
     </div>
 
     {# Компактная таблица-ключ: все вопросы с правильными ответами #}
     <div class="border rounded p-3 mb-4 bg-light">
-        <h6 class="mb-2 text-secondary fw-bold">Ключ ответов</h6>
+        <h6 class="mb-2 text-secondary fw-bold">Jogap açarlary</h6>
         <div class="d-flex flex-wrap gap-2">
             {% for q in all_questions %}
             <div class="text-center" style="min-width: 52px;">
@@ -40,9 +40,9 @@
                 <span class="fw-bold text-secondary">#{{ q.order }}</span>
                 <div class="d-flex gap-2">
                     {% if q.difficulty == 'hard' %}
-                    <span class="badge bg-danger">Сложный</span>
+                    <span class="badge bg-danger">Çylşyrymly</span>
                     {% else %}
-                    <span class="badge bg-success">Лёгкий</span>
+                    <span class="badge bg-success">Ýönekeý</span>
                     {% endif %}
                 </div>
             </div>

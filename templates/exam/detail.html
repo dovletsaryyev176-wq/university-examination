@@ -11,19 +11,19 @@
             <a href="{{ url_for('exam.export_pdf', id=session.id) }}"
                class="btn btn-outline-secondary btn-sm">⬇ PDF</a>
             <a href="{{ url_for('exam.index') }}"
-               class="btn btn-link text-secondary btn-sm">← Назад</a>
+               class="btn btn-link text-secondary btn-sm">← Yza</a>
         </div>
     </div>
 
     {# Summary banner #}
     {% if total_conflicts == 0 %}
     <div class="alert alert-success py-2 mt-3 mb-4">
-        ✓ Все студенты из разных областей — условие соблюдено полностью.
+        ✓ Hemme dalaşgärler garyşdyryldy.
     </div>
     {% else %}
     <div class="alert alert-warning py-2 mt-3 mb-4">
-        ⚠ Конфликтов (смежных из одной области): <strong>{{ total_conflicts }}</strong> —
-        выделены оранжевым. Это минимально возможное при данном составе.
+        ⚠ Garyşdyrmak mümkin bolmadyklaryň sany: <strong>{{ total_conflicts }}</strong> —
+        goýy sary reňkde görkezilen.
     </div>
     {% endif %}
 
@@ -36,13 +36,13 @@
             <div>
                 <h5 class="mb-0 text-primary">{{ c.name }}</h5>
                 <small class="text-muted">
-                    {{ c.location }} · Вместимость: {{ c.capacity }} · Размещено: {{ sts|length }}
+                    {{ c.location }} · Sygýan sany: {{ c.capacity }} · Ýerleşdirilen: {{ sts|length }}
                 </small>
             </div>
             {% if room_data.conflicts > 0 %}
-            <span class="badge bg-warning text-dark">{{ room_data.conflicts }} конфл.</span>
+            <span class="badge bg-warning text-dark">{{ room_data.conflicts }} mesele çykdy.</span>
             {% else %}
-            <span class="badge bg-success">Без конфликтов</span>
+            <span class="badge bg-success">Mesele çykmadyk</span>
             {% endif %}
         </div>
 
@@ -50,12 +50,12 @@
             <table class="table table-sm align-middle" style="font-size: 0.88rem;">
                 <thead class="table-light text-secondary">
                     <tr>
-                        <th style="width: 55px;" class="text-center">Место</th>
-                        <th style="width: 75px;">Номер</th>
-                        <th>Фамилия</th>
-                        <th>Имя</th>
-                        <th>Отчество</th>
-                        <th>Область</th>
+                        <th style="width: 55px;" class="text-center">Ýeri</th>
+                        <th style="width: 75px;">Belgisi</th>
+                        <th>Familiýasy</th>
+                        <th>Ady</th>
+                        <th>Atasynyň ady</th>
+                        <th>Welaýaty</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -73,7 +73,7 @@
                                 {{ s.region }}
                             </span>
                             {% if conflict %}
-                            <span class="text-warning small ms-1" title="Та же область, что и предыдущий">⚠</span>
+                            <span class="text-warning small ms-1" title="Bir öňki bilen welaýaty deň">⚠</span>
                             {% endif %}
                         </td>
                     </tr>

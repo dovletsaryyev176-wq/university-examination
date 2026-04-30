@@ -8,6 +8,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 
 from database import get_db_connection
+from math_render import has_math, text_to_png
 
 tests_bp = Blueprint('tests', __name__)
 
@@ -42,23 +43,23 @@ def _parse_subject_rows(form):
 def _validate_rows(db, rows, total_questions):
     errors = []
     if not rows:
-        errors.append('Добавьте хотя бы один предмет.')
+        errors.append('Iň bolmanda bir ders goşuň.')
         return errors
 
     seen = set()
     for r in rows:
         if r['subject_id'] in seen:
-            errors.append('Один и тот же предмет указан несколько раз.')
+            errors.append('Bir ders birnäçe gezek görkezilen.')
             break
         seen.add(r['subject_id'])
         if r['question_count'] <= 0:
-            errors.append('Количество вопросов должно быть больше 0.')
+            errors.append('Sorag sany 0-dan uly bolmaly.')
 
     total = sum(r['question_count'] for r in rows)
     if total != total_questions:
         errors.append(
-            f'Сумма вопросов по предметам ({total}) должна равняться '
-            f'общему количеству вопросов ({total_questions}).'
+            f'Dersler boýunça soraglaryň jemi ({total}) deň bolmaly '
+            f'umumy soraglaryň sanyna ({total_questions}).'
         )
 
     valid_ids = {r['id'] for r in db.execute(
@@ -66,7 +67,7 @@ def _validate_rows(db, rows, total_questions):
     ).fetchall()}
     for r in rows:
         if r['subject_id'] not in valid_ids:
-            errors.append(f'Предмет с ID {r["subject_id"]} не найден или неактивен.')
+            errors.append(f'ID we dersi {r["subject_id"]} tapylmady ýa-da bloklanan.')
 
     return errors
 
@@ -103,10 +104,10 @@ def _check_availability(db, rows, easy_percent):
             easy_need = round(r['question_count'] * easy_percent / 100)
             hard_need = r['question_count'] - easy_need
             errors.append(
-                f'Предмет «{subject_name}»: запрошено {r["question_count"]} вопросов '
-                f'(лёгких: {easy_need}, сложных: {hard_need}), '
-                f'но доступно только лёгких: {easy_avail}, сложных: {hard_avail} '
-                f'(максимум для данного соотношения: {max_feasible}).'
+                f'Ders «{subject_name}»: soralan sorag {r["question_count"]} sany '
+                f'(ýönekeý: {easy_need}, çylşyrymly: {hard_need}), '
+                f'emma ýönekeý bar: {easy_avail}, çylşyrymly: {hard_avail} '
+                f'(maksimum bu bölünişik boýunça: {max_feasible}).'
             )
     return errors
 
@@ -114,6 +115,54 @@ def _check_availability(db, rows, easy_percent):
 # ─────────────────────────────────────────────────────────────────────────────
 # PDF Generation
 # ─────────────────────────────────────────────────────────────────────────────
+
+def _pdf_add_text(pdf, text: str, x_offset: float = 0,
+                  bold: bool = False, fontsize: int = 12,
+                  line_h: int = 8, dpi: int = 200) -> None:
+    """Add a text block (with optional math) to the PDF at current position."""
+    avail_w = pdf.w - pdf.l_margin - pdf.r_margin - x_offset
+
+    if has_math(text):
+        # Render via matplotlib so LaTeX is displayed correctly
+        width_inches = avail_w / 25.4  # mm → inches
+        png = text_to_png(text, dpi=dpi, fontsize=fontsize, width_inches=width_inches)
+        if png:
+            if x_offset:
+                pdf.set_x(pdf.l_margin + x_offset)
+            pdf.image(io.BytesIO(png), x=pdf.l_margin + x_offset, w=avail_w)
+            pdf.ln(2)
+            return
+
+    # Fallback: plain text
+    font_style = 'B' if bold else ''
+    pdf.set_font('Arial', font_style, fontsize)
+    if x_offset:
+        pdf.set_x(pdf.l_margin + x_offset)
+    pdf.multi_cell(avail_w, line_h, text=text, new_x='LMARGIN', new_y='NEXT')
+
+
+_OPT_IMG_W_MM = 65   # fixed width for option images in PDF (mm)
+_OPT_IMG_H_MM = 50   # fixed height for option images in PDF (mm)
+_OPT_IMG_DPI  = 150
+
+_OPT_IMG_W_PX = int(_OPT_IMG_W_MM * _OPT_IMG_DPI / 25.4)
+_OPT_IMG_H_PX = int(_OPT_IMG_H_MM * _OPT_IMG_DPI / 25.4)
+
+
+def _letterbox_image(img_path: str) -> io.BytesIO:
+    """Resize image to uniform option-image size with white padding (letterbox)."""
+    from PIL import Image
+    img = Image.open(img_path).convert('RGB')
+    img.thumbnail((_OPT_IMG_W_PX, _OPT_IMG_H_PX), Image.LANCZOS)
+    canvas = Image.new('RGB', (_OPT_IMG_W_PX, _OPT_IMG_H_PX), (255, 255, 255))
+    x_off = (_OPT_IMG_W_PX - img.width) // 2
+    y_off = (_OPT_IMG_H_PX - img.height) // 2
+    canvas.paste(img, (x_off, y_off))
+    buf = io.BytesIO()
+    canvas.save(buf, format='PNG')
+    buf.seek(0)
+    return buf
+
 
 def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> bytes:
     """
@@ -138,8 +187,8 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
     pdf.set_text_color(120, 120, 120)
     pdf.cell(
         0, 8,
-        text=f"Всего вопросов: {test['total_questions']}   |   "
-             f"Лёгкие: {easy}%   Сложные: {hard}%",
+        text=f"Jemi sorag sany: {test['total_questions']}   |   "
+             f"Ýönekeý: {easy}%   Çylşyrymly: {hard}%",
         align='C',
         new_x='LMARGIN', new_y='NEXT',
     )
@@ -163,12 +212,13 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
         if has_imgs:
             pdf.add_page()
 
-        pdf.set_font('Arial', 'B', 12)
         q_text = question.get('question_text') or ''
+        # Render question number
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 8, text=f"{i}.", new_x='LMARGIN', new_y='NEXT')
+
         if q_text:
-            pdf.multi_cell(0, 8, text=f"{i}. {q_text}", new_x='LMARGIN', new_y='NEXT')
-        else:
-            pdf.multi_cell(0, 8, text=f"{i}.", new_x='LMARGIN', new_y='NEXT')
+            _pdf_add_text(pdf, q_text, x_offset=6, bold=True, fontsize=12, line_h=8)
 
         if question.get('question_image'):
             img_path = os.path.join(
@@ -186,21 +236,26 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
             opt_text = opt.get('option_text') or ''
             opt_image = opt.get('option_image')
 
+            label = f"{opt_key.upper()}) "
             if opt_text:
-                pdf.multi_cell(
-                    0, 7,
-                    text=f"    {opt_key.upper()})  {opt_text}",
-                    new_x='LMARGIN', new_y='NEXT',
-                )
+                full_text = label + opt_text
+                _pdf_add_text(pdf, full_text, x_offset=8, bold=False, fontsize=11, line_h=7)
             else:
-                pdf.cell(0, 7, text=f"    {opt_key.upper()})", new_x='LMARGIN', new_y='NEXT')
+                pdf.set_font('Arial', '', 11)
+                pdf.set_x(pdf.l_margin + 8)
+                pdf.cell(0, 7, text=label, new_x='LMARGIN', new_y='NEXT')
 
             if opt_image:
                 img_path = os.path.join(
                     static_dir, opt_image.replace('/', os.sep)
                 )
                 if os.path.exists(img_path):
-                    pdf.image(img_path, x=pdf.l_margin + 20, w=70)
+                    pdf.image(
+                        _letterbox_image(img_path),
+                        x=pdf.l_margin + 20,
+                        w=_OPT_IMG_W_MM,
+                        h=_OPT_IMG_H_MM,
+                    )
                     pdf.ln(2)
 
         pdf.ln(4)
@@ -285,11 +340,11 @@ def create():
 
         errors = []
         if not name:
-            errors.append('Укажите наименование теста.')
+            errors.append('Testiň adyny giriziň.')
         if total_questions <= 0:
-            errors.append('Общее количество вопросов должно быть больше 0.')
+            errors.append('Umumy sorag sany 0-dan uly bolmaly.')
         if not (0 <= easy_percent <= 100):
-            errors.append('Процент лёгких вопросов должен быть от 0 до 100.')
+            errors.append('Ýönekeý soraglaryň bölegi (0-100) arasynda bolmaly.')
         if not errors:
             errors.extend(_validate_rows(db, rows, total_questions))
         if not errors:
@@ -322,12 +377,12 @@ def create():
                 )
             db.commit()
             db.close()
-            flash('Тест успешно создан', 'success')
+            flash('Test üstünikli döredilen', 'success')
             return redirect(url_for('tests.index'))
         except sqlite3.IntegrityError:
             db.rollback()
             db.close()
-            flash('Ошибка сохранения: проверьте данные.', 'danger')
+            flash('Ýatda saklamada ýalňyşlyk çykdy: maglumatlary barlaň.', 'danger')
 
     db.close()
     return render_template(
@@ -347,7 +402,7 @@ def edit(id: int):
     test = db.execute('SELECT * FROM tests WHERE id = ?', (id,)).fetchone()
     if not test:
         db.close()
-        flash('Тест не найден', 'danger')
+        flash('Test tapylmady', 'danger')
         return redirect(url_for('tests.index'))
 
     subjects = _get_active_subjects(db)
@@ -368,11 +423,11 @@ def edit(id: int):
 
         errors = []
         if not name:
-            errors.append('Укажите наименование теста.')
+            errors.append('Testiň adyny giriziň.')
         if total_questions <= 0:
-            errors.append('Общее количество вопросов должно быть больше 0.')
+            errors.append('Umumy sorag sany 0-dan uly bolmaly.')
         if not (0 <= easy_percent <= 100):
-            errors.append('Процент лёгких вопросов должен быть от 0 до 100.')
+            errors.append('Ýönekeý soraglaryň göterimi (0-100) arasynda bolmaly.')
         if not errors:
             errors.extend(_validate_rows(db, rows, total_questions))
         if not errors:
@@ -404,12 +459,12 @@ def edit(id: int):
                 )
             db.commit()
             db.close()
-            flash('Тест успешно обновлён', 'success')
+            flash('Test üstünikli täzelenen', 'success')
             return redirect(url_for('tests.index'))
         except sqlite3.IntegrityError:
             db.rollback()
             db.close()
-            flash('Ошибка сохранения: проверьте данные.', 'danger')
+            flash('Ýatda saklama ýalňyşlygy: maglumatlary barlaň.', 'danger')
 
     test_subjects = db.execute(
         'SELECT subject_id, question_count FROM test_subjects WHERE test_id = ? ORDER BY id',
@@ -438,7 +493,7 @@ def delete(id: int):
     db.execute('DELETE FROM tests WHERE id = ?', (id,))
     db.commit()
     db.close()
-    flash('Тест удалён', 'info')
+    flash('Test ýok edildi', 'info')
     return redirect(url_for('tests.index'))
 
 
@@ -449,7 +504,7 @@ def export_pdf(id: int):
     test = db.execute('SELECT * FROM tests WHERE id = ?', (id,)).fetchone()
     if not test:
         db.close()
-        flash('Тест не найден', 'danger')
+        flash('Test tapylmady', 'danger')
         return redirect(url_for('tests.index'))
 
     test_subjects = db.execute(
@@ -538,7 +593,7 @@ def instances(test_id: int):
     test = db.execute('SELECT * FROM tests WHERE id = ?', (test_id,)).fetchone()
     if not test:
         db.close()
-        flash('Тест не найден', 'danger')
+        flash('Test tapylmady', 'danger')
         return redirect(url_for('tests.index'))
 
     instances_list = db.execute(
@@ -645,8 +700,8 @@ def instance_delete(instance_id: int):
         db.execute('DELETE FROM test_instances WHERE id = ?', (instance_id,))
         db.commit()
         db.close()
-        flash('Экземпляр теста удалён', 'info')
+        flash('Test nusgasy ýok edilen', 'info')
         return redirect(url_for('tests.instances', test_id=test_id))
     db.close()
-    flash('Экземпляр не найден', 'danger')
+    flash('Test nusgasy tapylmady', 'danger')
     return redirect(url_for('tests.index'))

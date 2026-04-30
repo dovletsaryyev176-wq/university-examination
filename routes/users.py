@@ -29,10 +29,10 @@ def create():
             db.execute('INSERT INTO users (full_name, username, password) VALUES (?, ?, ?)',
                        (full_name, username, password))
             db.commit()
-            flash(f"Пользователь {username} успешно создан")
+            flash(f"Ulanyjy {username} döredilen")
             return redirect(url_for('users.index'))
         except:
-            flash("Ошибка: такое имя пользователя уже существует")
+            flash("Ýalňyş: bu ulanyjy eýýäm bar")
         finally:
             db.close()
             
@@ -61,12 +61,12 @@ def edit(id):
             
         db.commit()
         db.close()
-        flash("Данные успешно обновлены")
+        flash("Maglumatlar üstünikli üýtgedildi")
         return redirect(url_for('users.index'))
 
     db.close()
     if not user:
-        flash("Пользователь не найден")
+        flash("Ulanyjy tapylmady")
         return redirect(url_for('users.index'))
         
     return render_template('users/form.html', user=user)
@@ -79,5 +79,5 @@ def delete(id):
     db.execute('DELETE FROM users WHERE id = ?', (id,))
     db.commit()
     db.close()
-    flash("Пользователь удален")
+    flash("Ulanyjy ýok edildi")
     return redirect(url_for('users.index'))

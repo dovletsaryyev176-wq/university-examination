@@ -4,9 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Система управления{% endblock %}</title>
+    <title>{% block title %}Dolandyryş ulgamy{% endblock %}</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='katex/katex.min.css') }}">
+    {% block head_extra %}{% endblock %}
 
     <style>
         :root {
@@ -48,7 +50,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">
-                <span class="text-info">Uni</span>Exam
+                <span class="text-info">HSTUTest</span>Randomizer
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -60,29 +62,29 @@
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'users.index' }}"
-                            href="{{ url_for('users.index') }}">Пользователи</a>
+                            href="{{ url_for('users.index') }}">Ulanyjylar</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('subjects.index') }}">Предметы</a>
+                        <a class="nav-link" href="{{ url_for('subjects.index') }}">Dersler</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('questions.index') }}">Вопросы</a>
+                        <a class="nav-link" href="{{ url_for('questions.index') }}">Soraglar</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('tests.') }}"
-                            href="{{ url_for('tests.index') }}">Тесты</a>
+                            href="{{ url_for('tests.index') }}">Testler</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('classrooms.') }}"
-                            href="{{ url_for('classrooms.index') }}">Классы</a>
+                            href="{{ url_for('classrooms.index') }}">Synplar</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('students.') }}"
-                            href="{{ url_for('students.index') }}">Студенты</a>
+                            href="{{ url_for('students.index') }}">Dalaşgärler</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('exam.') }}"
-                            href="{{ url_for('exam.index') }}">Размещение</a>
+                            href="{{ url_for('exam.index') }}">Ýerleşme</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -95,12 +97,12 @@
                             {{ current_user.full_name }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">Выйти</a></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">Ulgamdan çykmak</a></li>
                         </ul>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Войти</a>
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Ulgama girmek</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -129,6 +131,23 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='katex/katex.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='katex/contrib/auto-render.min.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    { left: '$$', right: '$$', display: true },
+                    { left: '$', right: '$', display: false },
+                    { left: '\\(', right: '\\)', display: false },
+                    { left: '\\[', right: '\\]', display: true }
+                ],
+                ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre',
+                              'annotation', 'annotation-xml', 'math-field'],
+                throwOnError: false
+            });
+        });
+    </script>
 
     {% block scripts %}{% endblock %}
 </body>

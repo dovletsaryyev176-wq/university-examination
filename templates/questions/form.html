@@ -1,36 +1,69 @@
 {% extends 'base.html' %}
 
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='mathlive/mathlive-static.css') }}">
+<style>
+    math-field {
+        width: 100%;
+        min-height: 2.75rem;
+        padding: 0.375rem 0.5rem;
+        font-size: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        background: #ffffff;
+        display: block;
+        box-sizing: border-box;
+    }
+    math-field:focus-within {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    math-field.question-field {
+        min-height: 4rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-10">
         <div class="main-card shadow-sm p-4 bg-white rounded">
-            <h3 class="mb-4">{{ 'Редактировать' if question else 'Новый' }} вопрос</h3>
+            <h3 class="mb-4">{{ 'Üýtgetmek' if question else 'Täze' }} sorag</h3>
 
-            <form method="POST" enctype="multipart/form-data">
+            <form method="POST" enctype="multipart/form-data" id="question_form">
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Предмет</label>
+                    <label class="form-label fw-bold">Ders</label>
                     <select name="subject_id" id="subject_select" class="form-select form-select-lg" required>
-                        <option value="" disabled {% if not current_subject_id %}selected{% endif %}>— выберите предмет —</option>
+                        <option value="" disabled {% if not current_subject_id %}selected{% endif %}>— dersi seçiň —</option>
                         {% for s in subjects %}
                         <option value="{{ s.id }}"
                             {% if question and s.id == question.subject_id %}selected{% endif %}
                             {% if not question and s.id == current_subject_id %}selected{% endif %}
                             {% if not s.is_active and not (question and s.id == question.subject_id) %}disabled{% endif %}>
-                            {{ s.name }}{% if s.is_active is defined and not s.is_active %} (заблокирован){% endif %}
+                            {{ s.name }}{% if s.is_active is defined and not s.is_active %} (bloklanan){% endif %}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Текст вопроса</label>
-                    <textarea name="question_text" rows="3" class="form-control form-control-lg"
-                        placeholder="Введите текст вопроса (может отсутствовать, если есть фото)">{{ question.question_text if question else draft.get('question_text', '') }}</textarea>
-                    <div class="form-text">Можно оставить пустым, если вопросу соответствует фотография.</div>
+                    <label class="form-label fw-bold">Sorag teksti</label>
+                    <math-field id="question_text_field" class="question-field"
+                        default-mode="text"
+                        fonts-directory="{{ url_for('static', filename='mathlive/fonts') }}"
+                        virtual-keyboard-mode="onfocus"
+                    ></math-field>
+                    <input type="hidden" name="question_text" id="question_text_val"
+                        value="{{ question.question_text if question else draft.get('question_text', '') }}">
+                    <div class="form-text mt-1">
+                        Surat bar bolsa boş bolup biler. &nbsp;·&nbsp;
+                        Matematika üçin: setir içinde <code>$...$</code> ýa-da tekst setiriň aşagynda <code>$$...$$</code>
+                    </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Фотография вопроса</label>
+                    <label class="form-label fw-bold">Soragyň surady</label>
                     <input type="file" name="question_image" class="form-control" accept="image/*">
                     {% if question and question.question_image %}
                     <div class="mt-3">
@@ -38,11 +71,11 @@
                             class="img-thumbnail" style="max-height: 200px; object-fit: cover;">
                     </div>
                     {% endif %}
-                    <div class="form-text">Можно оставить пустым, если вопросу соответствует текст.</div>
+                    <div class="form-text">Soragyň teksti bar bolsa, boş bolup biler.</div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Правильные варианты <span class="text-muted fw-normal">(можно выбрать несколько)</span></label>
+                    <label class="form-label fw-bold">Dogry jogaplar <span class="text-muted fw-normal">(birnäçe bolup biler)</span></label>
                     {% set correct_list = draft.get('correct_options_list', []) %}
                     <div class="d-flex gap-3 flex-wrap" id="correct_options_wrap">
                         {% for k in option_keys %}
@@ -56,7 +89,7 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Уровень сложности</label>
+                    <label class="form-label fw-bold">Agyrlyk derejesi</label>
                     {% set current_difficulty = question.difficulty if question else draft.get('difficulty', 'easy') %}
                     <div class="d-flex gap-3 flex-wrap">
                         {% for d in difficulty_choices %}
@@ -76,18 +109,22 @@
                 </div>
 
                 <div class="mb-4">
-                    <h5 class="mb-3 text-secondary" id="options_heading">Варианты ответов</h5>
+                    <h5 class="mb-3 text-secondary" id="options_heading">Jogap görnüşleri</h5>
 
                     {% for k in option_keys %}
                     <div class="border rounded p-3 mb-3 bg-light" id="option_block_{{ k }}">
-                        <div class="fw-bold mb-2">Вариант {{ k|upper }}</div>
+                        <div class="fw-bold mb-2">Görnüş {{ k|upper }}</div>
 
-                        <label class="form-label fw-bold">Текст варианта</label>
-                        <input type="text" name="option_{{ k }}_text" class="form-control form-control-lg mb-2"
-                            placeholder="Текст варианта (может отсутствовать, если есть фото)"
+                        <label class="form-label fw-bold">Görnüşiň teksti</label>
+                        <math-field id="option_{{ k }}_field"
+                            default-mode="text"
+                            fonts-directory="{{ url_for('static', filename='mathlive/fonts') }}"
+                            virtual-keyboard-mode="onfocus"
+                        ></math-field>
+                        <input type="hidden" name="option_{{ k }}_text" id="option_{{ k }}_val"
                             value="{{ options[k].option_text if options[k].option_text is not none else '' }}">
 
-                        <label class="form-label fw-bold">Фотография варианта</label>
+                        <label class="form-label fw-bold mt-2">Görnüşiň surady</label>
                         <input type="file" name="option_{{ k }}_image" class="form-control" accept="image/*">
 
                         {% if options[k].option_image %}
@@ -96,21 +133,28 @@
                                 class="img-thumbnail" style="max-height: 160px; object-fit: cover;">
                         </div>
                         {% endif %}
-                        <div class="form-text mt-2">Можно оставить пустым, если есть текст или уже загружено фото.</div>
+                        <div class="form-text mt-2">Tekst ýa-da surat bar bolsa, boş bolup biler.</div>
                     </div>
                     {% endfor %}
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-4">
-                    <a href="{{ url_for('questions.index') }}" class="btn btn-link text-secondary text-decoration-none">Отмена</a>
-                    <button type="submit" class="btn btn-primary btn-lg px-5">Сохранить</button>
+                    <a href="{{ url_for('questions.index') }}" class="btn btn-link text-secondary text-decoration-none">Gaýtarmak</a>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Ýatda saklamak</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
+<script src="{{ url_for('static', filename='mathlive/mathlive.min.js') }}"></script>
 <script>
+if (typeof MathfieldElement !== 'undefined') {
+    MathfieldElement.fontsDirectory = "{{ url_for('static', filename='mathlive/fonts') }}";
+}
+
 const subjectAnswerCounts = {{ subject_answer_counts | tojson }};
 const allKeys = ['a', 'b', 'c', 'd', 'e'];
 
@@ -119,7 +163,7 @@ function updateOptionsVisibility() {
     const subjectId = select ? select.value : '';
     const count = subjectId && subjectAnswerCounts[subjectId] ? subjectAnswerCounts[subjectId] : 0;
 
-    allKeys.forEach(function(k, i) {
+    allKeys.forEach(function (k, i) {
         const block = document.getElementById('option_block_' + k);
         const correctItem = document.getElementById('correct_item_' + k);
         const correctCheck = document.getElementById('correct_' + k);
@@ -132,11 +176,51 @@ function updateOptionsVisibility() {
 
     const heading = document.getElementById('options_heading');
     if (heading && count > 0) {
-        heading.textContent = 'Варианты ответов (A–' + allKeys[count - 1].toUpperCase() + ')';
+        heading.textContent = 'Jogap görnüşleri (A–' + allKeys[count - 1].toUpperCase() + ')';
     }
 }
 
-document.addEventListener('DOMContentLoaded', updateOptionsVisibility);
+function bindMathField(fieldId, hiddenId) {
+    const field = document.getElementById(fieldId);
+    const hidden = document.getElementById(hiddenId);
+    if (!field || !hidden) return;
+
+    if (hidden.value) {
+        field.value = hidden.value;
+    }
+    field.addEventListener('input', function () {
+        hidden.value = field.value;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    updateOptionsVisibility();
+
+    bindMathField('question_text_field', 'question_text_val');
+
+    allKeys.forEach(function (k) {
+        bindMathField('option_' + k + '_field', 'option_' + k + '_val');
+    });
+
+    document.getElementById('question_form').addEventListener('submit', function () {
+        const qField = document.getElementById('question_text_field');
+        if (qField) document.getElementById('question_text_val').value = qField.value;
+        allKeys.forEach(function (k) {
+            const f = document.getElementById('option_' + k + '_field');
+            if (f) document.getElementById('option_' + k + '_val').value = f.value;
+        });
+    });
+
+    document.querySelectorAll('math-field').forEach(function (mf) {
+        mf.addEventListener('focusin', function () {
+            if (window.mathVirtualKeyboard) window.mathVirtualKeyboard.show();
+        });
+        mf.addEventListener('focusout', function () {
+            if (window.mathVirtualKeyboard) window.mathVirtualKeyboard.hide();
+        });
+    });
+});
+
 document.getElementById('subject_select').addEventListener('change', updateOptionsVisibility);
 </script>
 {% endblock %}

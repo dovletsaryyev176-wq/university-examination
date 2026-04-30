@@ -12,7 +12,7 @@ questions_bp = Blueprint('questions', __name__)
 
 OPTION_KEYS = ('a', 'b', 'c', 'd', 'e')
 DIFFICULTY_CHOICES = ('easy', 'hard')
-DIFFICULTY_LABELS = {'easy': 'Лёгкий', 'hard': 'Сложный'}
+DIFFICULTY_LABELS = {'easy': 'Ýönekeý', 'hard': 'Çylşyrymly'}
 
 
 def _project_root() -> str:
@@ -180,7 +180,7 @@ def create():
         if not correct_options_raw:
             subjects = _load_subjects_for_dropdown(db, current_subject_id=subject_id)
             db.close()
-            flash('Нужно выбрать хотя бы один правильный вариант', 'danger')
+            flash('Iň bolmanda bir dogry görnüş seçmeli', 'danger')
             return _render_form(None, _make_options_draft(), subjects, _make_draft(), subject_id)
 
         question_image_file = request.files.get('question_image')
@@ -189,7 +189,7 @@ def create():
         if not question_text and not has_new_question_image:
             subjects = _load_subjects_for_dropdown(db, current_subject_id=subject_id)
             db.close()
-            flash('У вопроса должен быть текст или фотография', 'danger')
+            flash('Soragyň teksti ýa-da surady bolmaly', 'danger')
             return _render_form(None, _make_options_draft(), subjects, _make_draft(), subject_id)
 
         option_final_text = {}
@@ -203,7 +203,7 @@ def create():
             has_new_image = bool(opt_file and opt_file.filename)
 
             if not opt_text and not has_new_image:
-                errors.append(f'Вариант {k.upper()} должен иметь текст или фотографию')
+                errors.append(f'Görnüş {k.upper()} surady ýa-da teksti bolmaly')
 
             option_final_text[k] = opt_text
             option_new_files[k] = opt_file
@@ -236,12 +236,12 @@ def create():
                 )
             db.commit()
             db.close()
-            flash('Вопрос успешно добавлен', 'success')
+            flash('Sorag üstünikli goşulan', 'success')
             return redirect(url_for('questions.index'))
         except sqlite3.IntegrityError:
             db.rollback()
             db.close()
-            flash('Ошибка сохранения: проверьте значения полей', 'danger')
+            flash('Ýatda saklamada ýalňyş çykdy: meýdançalaryň bahalaryny barlaň', 'danger')
 
     db = get_db_connection()
     subjects = _load_subjects_for_dropdown(db)
@@ -310,7 +310,7 @@ def edit(id: int):
         if not correct_options_raw:
             subjects = _load_subjects_for_dropdown(db, current_subject_id=question['subject_id'])
             db.close()
-            flash('Нужно выбрать хотя бы один правильный вариант', 'danger')
+            flash('Iň bolmanda bir dogry görnüş seçmeli', 'danger')
             return _render_form(question, _make_options_draft(), subjects, _make_draft(), question['subject_id'])
 
         question_image_file = request.files.get('question_image')
@@ -320,7 +320,7 @@ def edit(id: int):
         if not question_text and not final_question_image_present:
             subjects = _load_subjects_for_dropdown(db, current_subject_id=question['subject_id'])
             db.close()
-            flash('У вопроса должен быть текст или фотография', 'danger')
+            flash('Soragyň teksti ýa-da surady bolmaly', 'danger')
             return _render_form(question, _make_options_draft(), subjects, _make_draft(), question['subject_id'])
 
         new_option_files = {}
@@ -335,7 +335,7 @@ def edit(id: int):
             existing_image = options[k].get('option_image')
 
             if not opt_text and not has_new_image and not existing_image:
-                errors.append(f'Вариант {k.upper()} должен иметь текст или фотографию')
+                errors.append(f'Görnüş {k.upper()} surady ýa-da teksti bolmalydyr')
 
             final_option_text[k] = opt_text
             new_option_files[k] = opt_file
@@ -384,12 +384,12 @@ def edit(id: int):
 
             db.commit()
             db.close()
-            flash('Вопрос успешно обновлен', 'success')
+            flash('Sorag üstünikli üýtgedildi', 'success')
             return redirect(url_for('questions.index'))
         except sqlite3.IntegrityError:
             db.rollback()
             db.close()
-            flash('Ошибка сохранения: проверьте значения полей', 'danger')
+            flash('Ýatda saklamada ýalňyş çykdy: meýdançalaryň bahalaryny barlaň', 'danger')
 
     subjects = _load_subjects_for_dropdown(db, current_subject_id=question['subject_id'])
     db.close()
@@ -410,5 +410,5 @@ def toggle(id: int):
     db.execute('UPDATE questions SET is_active = 1 - is_active WHERE id = ?', (id,))
     db.commit()
     db.close()
-    flash('Статус вопроса изменен', 'info')
+    flash('Soragyň ýagdaýy üýtgedildi', 'info')
     return redirect(url_for('questions.index'))
