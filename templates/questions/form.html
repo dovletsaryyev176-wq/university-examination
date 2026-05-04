@@ -1,30 +1,5 @@
 {% extends 'base.html' %}
 
-{% block head_extra %}
-<link rel="stylesheet" href="{{ url_for('static', filename='mathlive/mathlive-static.css') }}">
-<style>
-    math-field {
-        width: 100%;
-        min-height: 2.75rem;
-        padding: 0.375rem 0.5rem;
-        font-size: 1rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.375rem;
-        background: #ffffff;
-        display: block;
-        box-sizing: border-box;
-    }
-    math-field:focus-within {
-        border-color: #86b7fe;
-        outline: 0;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-    math-field.question-field {
-        min-height: 4rem;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-10">
@@ -49,17 +24,9 @@
 
                 <div class="mb-4">
                     <label class="form-label fw-bold">Sorag teksti</label>
-                    <math-field id="question_text_field" class="question-field"
-                        default-mode="text"
-                        fonts-directory="{{ url_for('static', filename='mathlive/fonts') }}"
-                        virtual-keyboard-mode="onfocus"
-                    ></math-field>
-                    <input type="hidden" name="question_text" id="question_text_val"
-                        value="{{ question.question_text if question else draft.get('question_text', '') }}">
-                    <div class="form-text mt-1">
-                        Surat bar bolsa boş bolup biler. &nbsp;·&nbsp;
-                        Matematika üçin: setir içinde <code>$...$</code> ýa-da tekst setiriň aşagynda <code>$$...$$</code>
-                    </div>
+                    <textarea name="question_text" id="question_text_field" class="form-control" rows="3"
+                        >{{ question.question_text if question else draft.get('question_text', '') }}</textarea>
+                    <div class="form-text mt-1">Surat bar bolsa boş bolup biler.</div>
                 </div>
 
                 <div class="mb-4">
@@ -116,13 +83,8 @@
                         <div class="fw-bold mb-2">Görnüş {{ k|upper }}</div>
 
                         <label class="form-label fw-bold">Görnüşiň teksti</label>
-                        <math-field id="option_{{ k }}_field"
-                            default-mode="text"
-                            fonts-directory="{{ url_for('static', filename='mathlive/fonts') }}"
-                            virtual-keyboard-mode="onfocus"
-                        ></math-field>
-                        <input type="hidden" name="option_{{ k }}_text" id="option_{{ k }}_val"
-                            value="{{ options[k].option_text if options[k].option_text is not none else '' }}">
+                        <textarea name="option_{{ k }}_text" id="option_{{ k }}_field" class="form-control" rows="2"
+                            >{{ options[k].option_text if options[k].option_text is not none else '' }}</textarea>
 
                         <label class="form-label fw-bold mt-2">Görnüşiň surady</label>
                         <input type="file" name="option_{{ k }}_image" class="form-control" accept="image/*">
@@ -149,12 +111,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='mathlive/mathlive.min.js') }}"></script>
 <script>
-if (typeof MathfieldElement !== 'undefined') {
-    MathfieldElement.fontsDirectory = "{{ url_for('static', filename='mathlive/fonts') }}";
-}
-
 const subjectAnswerCounts = {{ subject_answer_counts | tojson }};
 const allKeys = ['a', 'b', 'c', 'd', 'e'];
 
@@ -180,47 +137,9 @@ function updateOptionsVisibility() {
     }
 }
 
-function bindMathField(fieldId, hiddenId) {
-    const field = document.getElementById(fieldId);
-    const hidden = document.getElementById(hiddenId);
-    if (!field || !hidden) return;
-
-    if (hidden.value) {
-        field.value = hidden.value;
-    }
-    field.addEventListener('input', function () {
-        hidden.value = field.value;
-    });
-}
-
 document.addEventListener('DOMContentLoaded', function () {
     updateOptionsVisibility();
-
-    bindMathField('question_text_field', 'question_text_val');
-
-    allKeys.forEach(function (k) {
-        bindMathField('option_' + k + '_field', 'option_' + k + '_val');
-    });
-
-    document.getElementById('question_form').addEventListener('submit', function () {
-        const qField = document.getElementById('question_text_field');
-        if (qField) document.getElementById('question_text_val').value = qField.value;
-        allKeys.forEach(function (k) {
-            const f = document.getElementById('option_' + k + '_field');
-            if (f) document.getElementById('option_' + k + '_val').value = f.value;
-        });
-    });
-
-    document.querySelectorAll('math-field').forEach(function (mf) {
-        mf.addEventListener('focusin', function () {
-            if (window.mathVirtualKeyboard) window.mathVirtualKeyboard.show();
-        });
-        mf.addEventListener('focusout', function () {
-            if (window.mathVirtualKeyboard) window.mathVirtualKeyboard.hide();
-        });
-    });
+    document.getElementById('subject_select').addEventListener('change', updateOptionsVisibility);
 });
-
-document.getElementById('subject_select').addEventListener('change', updateOptionsVisibility);
 </script>
 {% endblock %}

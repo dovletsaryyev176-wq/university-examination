@@ -79,7 +79,7 @@ def edit(id):
             )
             db.commit()
             db.close()
-            flash('Класс обновлён', 'success')
+            flash('Synp üýtgedildi', 'success')
             return redirect(url_for('classrooms.index'))
 
     db.close()

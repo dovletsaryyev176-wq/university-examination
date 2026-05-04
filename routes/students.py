@@ -31,14 +31,14 @@ def _parse_excel(file_bytes: bytes):
     try:
         wb = openpyxl.load_workbook(BytesIO(file_bytes), read_only=True, data_only=True)
     except Exception as e:
-        return None, f'Не удалось открыть файл: {e}'
+        return None, f'Faýly açmak başartmady: {e}'
 
     ws = wb.active
     rows = list(ws.iter_rows(values_only=True))
     wb.close()
 
     if not rows:
-        return None, 'Файл пуст'
+        return None, 'Faýl boş'
 
     first_row = [str(c).strip() if c is not None else '' for c in rows[0]]
 
@@ -55,8 +55,8 @@ def _parse_excel(file_bytes: bytes):
     missing = [k for k in ('last_name', 'region') if col.get(k) is None]
     if missing:
         return None, (
-            f'Не найдены обязательные колонки: {", ".join(missing)}. '
-            'Убедитесь что в первой строке есть заголовки «Фамилия» и «Область».'
+            f'Hökmany sütünler tapylmady: {", ".join(missing)}. '
+            'Birinji setirde «Familýa» we «Welaýat» sütün atlarynyň bardygyny barlaň.'
         )
 
     def _cell(row, key):
@@ -78,11 +78,11 @@ def _parse_excel(file_bytes: bytes):
             'last_name':  last_name,
             'first_name': _cell(row, 'first_name'),
             'patronymic': _cell(row, 'patronymic'),
-            'region':     _cell(row, 'region') or 'Неизвестно',
+            'region':     _cell(row, 'region') or 'Näbelli',
         })
 
     if not students:
-        return None, 'Не найдено ни одной строки с данными'
+        return None, 'Maglumat tapylmady'
 
     return students, None
 
@@ -106,16 +106,16 @@ def index():
 def import_excel():
     file = request.files.get('file')
     if not file or file.filename == '':
-        flash('Выберите файл', 'danger')
+        flash('Faýl saýlaň', 'danger')
         return redirect(url_for('students.index'))
 
     if not file.filename.lower().endswith(('.xlsx', '.xls')):
-        flash('Поддерживаются только файлы .xlsx и .xls', 'danger')
+        flash('Diňe .xlsx we .xls faýllar goldanylýar', 'danger')
         return redirect(url_for('students.index'))
 
     students, error = _parse_excel(file.read())
     if error:
-        flash(f'Ошибка импорта: {error}', 'danger')
+        flash(f'Import ýalňyşlygy: {error}', 'danger')
         return redirect(url_for('students.index'))
 
     db = get_db_connection()
@@ -128,7 +128,7 @@ def import_excel():
     db.commit()
     db.close()
 
-    flash(f'Импортировано {len(students)} студентов', 'success')
+    flash(f'{len(students)} dalaşgär import edildi', 'success')
     return redirect(url_for('students.index'))
 
 
@@ -141,5 +141,5 @@ def clear():
     db.execute('DELETE FROM students')
     db.commit()
     db.close()
-    flash('Список студентов и все размещения очищены', 'info')
+    flash('Dalaşgärleriň sanawy we ähli ýerleşmeler arassalandy', 'info')
     return redirect(url_for('students.index'))

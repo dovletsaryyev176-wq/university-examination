@@ -145,7 +145,7 @@ def create():
         if not subject or subject['is_active'] != 1:
             subjects = _load_subjects_for_dropdown(db)
             db.close()
-            flash('Выбранный предмет неактивен или не найден', 'danger')
+            flash('Saýlanan ders tapylmady ýa-da işjeň däl', 'danger')
             return _render_form(
                 None,
                 {k: {'option_key': k, 'option_text': None, 'option_image': None} for k in OPTION_KEYS},
@@ -263,7 +263,7 @@ def edit(id: int):
     question, options = _load_question(db, id)
     if not question:
         db.close()
-        flash('Вопрос не найден', 'danger')
+        flash('Sorag tapylmady', 'danger')
         return redirect(url_for('questions.index'))
 
     if request.method == 'POST':
@@ -280,7 +280,7 @@ def edit(id: int):
         if not subject:
             subjects = _load_subjects_for_dropdown(db, current_subject_id=question['subject_id'])
             db.close()
-            flash('Выбранный предмет не найден', 'danger')
+            flash('Saýlanan ders tapylmady', 'danger')
             options_draft = {k: {'option_key': k, 'option_text': request.form.get(f'option_{k}_text', '').strip() or None, 'option_image': options[k].get('option_image')} for k in OPTION_KEYS}
             return _render_form(question, options_draft, subjects, {'question_text': request.form.get('question_text', ''), 'correct_options_list': request.form.getlist('correct_options'), 'difficulty': request.form.get('difficulty', 'easy')}, question['subject_id'])
 

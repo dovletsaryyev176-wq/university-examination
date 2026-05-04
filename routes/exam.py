@@ -126,7 +126,7 @@ def _generate_pdf(session_name: str, classrooms_data: list) -> bytes:
 
         # Table header
         COL_W = [12, 20, 95, 60]
-        HDRS  = ['№', 'Номер', 'ФИО', 'Область']
+        HDRS  = ['№', 'Belgisi', 'F.A.A.', 'Welaýat']
         pdf.set_font(font_name, 'B', 10)
         pdf.set_fill_color(60, 120, 200)
         pdf.set_text_color(255, 255, 255)

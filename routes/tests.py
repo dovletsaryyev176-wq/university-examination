@@ -8,7 +8,6 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 
 from database import get_db_connection
-from math_render import has_math, text_to_png
 
 tests_bp = Blueprint('tests', __name__)
 
@@ -119,21 +118,7 @@ def _check_availability(db, rows, easy_percent):
 def _pdf_add_text(pdf, text: str, x_offset: float = 0,
                   bold: bool = False, fontsize: int = 12,
                   line_h: int = 8, dpi: int = 200) -> None:
-    """Add a text block (with optional math) to the PDF at current position."""
     avail_w = pdf.w - pdf.l_margin - pdf.r_margin - x_offset
-
-    if has_math(text):
-        # Render via matplotlib so LaTeX is displayed correctly
-        width_inches = avail_w / 25.4  # mm → inches
-        png = text_to_png(text, dpi=dpi, fontsize=fontsize, width_inches=width_inches)
-        if png:
-            if x_offset:
-                pdf.set_x(pdf.l_margin + x_offset)
-            pdf.image(io.BytesIO(png), x=pdf.l_margin + x_offset, w=avail_w)
-            pdf.ln(2)
-            return
-
-    # Fallback: plain text
     font_style = 'B' if bold else ''
     pdf.set_font('Arial', font_style, fontsize)
     if x_offset:
@@ -626,7 +611,7 @@ def instance_detail(instance_id: int):
     ).fetchone()
     if not instance:
         db.close()
-        flash('Экземпляр теста не найден', 'danger')
+        flash('Test nusgasy tapylmady', 'danger')
         return redirect(url_for('tests.index'))
 
     rows = db.execute(
