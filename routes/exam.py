@@ -146,12 +146,11 @@ def _generate_pdf(session_name: str, classrooms_data: list) -> bytes:
             else:
                 pdf.set_fill_color(255, 255, 255)
 
-            first    = (s.get('first_name') or '')[:1]
-            patronym = (s.get('patronymic') or '')[:1]
-            initials = (first + '.' if first else '') + (patronym + '.' if patronym else '')
-            full_name = f"{s['last_name']} {initials}".strip()
+            first    = (s.get('first_name') or '').strip()
+            patronym = (s.get('patronymic') or '').strip()
+            full_name = ' '.join(p for p in [s['last_name'], first, patronym] if p)
 
-            row_vals = [str(i), str(s.get('number') or ''), full_name, s.get('region') or '']
+            row_vals = [str(i), str(s.get('student_number') or ''), full_name, s.get('region') or '']
             for w, val in zip(COL_W, row_vals):
                 pdf.cell(w, 7, text=val, border=1, fill=True,
                          align='C' if w <= 20 else 'L')
