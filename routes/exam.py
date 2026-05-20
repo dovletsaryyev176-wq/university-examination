@@ -16,19 +16,27 @@ def _project_root():
 
 
 def _find_font(bold=False):
-    candidates = (
-        [
+    if bold:
+        candidates = [
             r'C:\Windows\Fonts\arialbd.ttf',
             '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
             '/Library/Fonts/Arial Bold.ttf',
             '/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf',
-        ] if bold else [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/liberation/LiberationSans-Bold.ttf',
+        ]
+    else:
+        candidates = [
+            r'C:\Windows\Fonts\ARIALUNI.TTF',
             r'C:\Windows\Fonts\arial.ttf',
+            '/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
             '/System/Library/Fonts/Supplemental/Arial.ttf',
+            '/Library/Fonts/Arial Unicode.ttf',
             '/Library/Fonts/Arial.ttf',
             '/usr/share/fonts/truetype/msttcorefonts/Arial.ttf',
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            '/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
         ]
-    )
     return next((p for p in candidates if os.path.exists(p)), None)
 
 
@@ -89,11 +97,11 @@ def _generate_pdf(session_name: str, classrooms_data: list) -> bytes:
 
     font_name = 'Helvetica'
     reg = _find_font(bold=False)
-    bold = _find_font(bold=True)
-    if reg and bold:
+    bld = _find_font(bold=True)
+    if reg:
         try:
             pdf.add_font('Arial', '', reg)
-            pdf.add_font('Arial', 'B', bold)
+            pdf.add_font('Arial', 'B', bld or reg)
             font_name = 'Arial'
         except Exception:
             pass
