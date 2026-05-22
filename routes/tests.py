@@ -126,22 +126,26 @@ def _pdf_add_text(pdf, text: str, x_offset: float = 0,
     pdf.multi_cell(avail_w, line_h, text=text, new_x='LMARGIN', new_y='NEXT')
 
 
-_OPT_IMG_W_MM = 65   # fixed width for option images in PDF (mm)
-_OPT_IMG_H_MM = 50   # fixed height for option images in PDF (mm)
-_OPT_IMG_DPI  = 150
+_IMG_W_MM = 65   # uniform width for all images in PDF (mm)
+_IMG_H_MM = 50   # uniform height for all images in PDF (mm)
+_IMG_DPI  = 150
 
-_OPT_IMG_W_PX = int(_OPT_IMG_W_MM * _OPT_IMG_DPI / 25.4)
-_OPT_IMG_H_PX = int(_OPT_IMG_H_MM * _OPT_IMG_DPI / 25.4)
+_IMG_W_PX = int(_IMG_W_MM * _IMG_DPI / 25.4)
+_IMG_H_PX = int(_IMG_H_MM * _IMG_DPI / 25.4)
+
+# Keep old names as aliases so existing references still work
+_OPT_IMG_W_MM = _IMG_W_MM
+_OPT_IMG_H_MM = _IMG_H_MM
 
 
 def _letterbox_image(img_path: str) -> io.BytesIO:
-    """Resize image to uniform option-image size with white padding (letterbox)."""
+    """Resize image to uniform size with white padding (letterbox)."""
     from PIL import Image
     img = Image.open(img_path).convert('RGB')
-    img.thumbnail((_OPT_IMG_W_PX, _OPT_IMG_H_PX), Image.LANCZOS)
-    canvas = Image.new('RGB', (_OPT_IMG_W_PX, _OPT_IMG_H_PX), (255, 255, 255))
-    x_off = (_OPT_IMG_W_PX - img.width) // 2
-    y_off = (_OPT_IMG_H_PX - img.height) // 2
+    img.thumbnail((_IMG_W_PX, _IMG_H_PX), Image.LANCZOS)
+    canvas = Image.new('RGB', (_IMG_W_PX, _IMG_H_PX), (255, 255, 255))
+    x_off = (_IMG_W_PX - img.width) // 2
+    y_off = (_IMG_H_PX - img.height) // 2
     canvas.paste(img, (x_off, y_off))
     buf = io.BytesIO()
     canvas.save(buf, format='PNG')
@@ -210,9 +214,12 @@ def _generate_pdf(test: dict, questions_with_options: list, static_dir: str) -> 
                 static_dir, question['question_image'].replace('/', os.sep)
             )
             if os.path.exists(img_path):
-                avail_w = pdf.w - pdf.l_margin - pdf.r_margin
-                img_w = min(avail_w * 0.65, 130)
-                pdf.image(img_path, x=pdf.l_margin + 8, w=img_w)
+                pdf.image(
+                    _letterbox_image(img_path),
+                    x=pdf.l_margin + 8,
+                    w=_IMG_W_MM,
+                    h=_IMG_H_MM,
+                )
                 pdf.ln(3)
 
         pdf.set_font('Arial', '', 11)
