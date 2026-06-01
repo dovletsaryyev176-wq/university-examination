@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS subjects (
     is_active INTEGER DEFAULT 1
 );
 
--- Вопросы (CRUD без удаления; только блокировка/разблокировка via is_active)
 CREATE TABLE IF NOT EXISTS questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     subject_id INTEGER NOT NULL,
@@ -58,7 +57,6 @@ CREATE TABLE IF NOT EXISTS questions (
     FOREIGN KEY (subject_id) REFERENCES subjects(id)
 );
 
--- Варианты ответов для вопроса: A/B/C/D/E. У каждого варианта может быть текст и/или картинка.
 CREATE TABLE IF NOT EXISTS question_options (
     question_id INTEGER NOT NULL,
     option_key TEXT NOT NULL CHECK (option_key IN ('a', 'b', 'c', 'd', 'e')),
@@ -86,7 +84,6 @@ CREATE TABLE IF NOT EXISTS test_subjects (
     FOREIGN KEY (subject_id) REFERENCES subjects(id)
 );
 
--- Сохранённые экземпляры сгенерированных тестов
 CREATE TABLE IF NOT EXISTS test_instances (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     test_id INTEGER NOT NULL,
@@ -94,7 +91,6 @@ CREATE TABLE IF NOT EXISTS test_instances (
     FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE
 );
 
--- Конкретные вопросы и правильные ответы для каждого экземпляра теста
 CREATE TABLE IF NOT EXISTS test_instance_questions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     instance_id INTEGER NOT NULL,
@@ -105,4 +101,4 @@ CREATE TABLE IF NOT EXISTS test_instance_questions (
     FOREIGN KEY (instance_id) REFERENCES test_instances(id) ON DELETE CASCADE,
     FOREIGN KEY (subject_id) REFERENCES subjects(id),
     FOREIGN KEY (question_id) REFERENCES questions(id)
-);
+);
