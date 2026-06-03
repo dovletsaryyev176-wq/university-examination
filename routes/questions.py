@@ -23,6 +23,17 @@ def _ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
 
+def _delete_image(rel_path: str | None) -> None:
+    if not rel_path:
+        return
+    abs_path = os.path.join(_project_root(), 'static', rel_path.replace('/', os.sep))
+    if os.path.isfile(abs_path):
+        try:
+            os.remove(abs_path)
+        except OSError:
+            pass
+
+
 def _save_image(file_storage, rel_dir: str) -> str | None:
     if not file_storage or not getattr(file_storage, 'filename', None):
         return None
@@ -104,6 +115,214 @@ def _render_form(question, options, subjects, draft, current_subject_id):
         difficulty_labels=DIFFICULTY_LABELS,
         subject_answer_counts=_subject_answer_counts(subjects),
     )
+
+
+_DIFFICULTY_MAP = {
+    'easy': 'easy', 'ýönekeý': 'easy', 'йонекей': 'easy', 'простой': 'easy', '1': 'easy',
+    'hard': 'hard', 'çylşyrymly': 'hard', 'чылшырымлы': 'hard', 'сложный': 'hard', '2': 'hard',
+}
+
+
+def _parse_questions_excel(file_bytes: bytes):
+    from io import BytesIO
+    import openpyxl
+
+    try:
+        wb = openpyxl.load_workbook(BytesIO(file_bytes), read_only=True, data_only=True)
+    except Exception as e:
+        return None, f'Faýly açmak başartmady: {e}'
+
+    ws = wb.active
+    rows = list(ws.iter_rows(values_only=True))
+    wb.close()
+
+    if len(rows) < 2:
+        return None, 'Faýlda maglumat ýok'
+
+    headers = [str(c).strip().lower() if c is not None else '' for c in rows[0]]
+
+    def _col(names):
+        for name in names:
+            for i, h in enumerate(headers):
+                if name in h:
+                    return i
+        return None
+
+    def _col_exact(names):
+        for name in names:
+            for i, h in enumerate(headers):
+                if h == name:
+                    return i
+        return None
+
+    col_subject  = _col(['ders', 'subject', 'предмет'])
+    col_text     = _col(['sorag', 'question', 'вопрос', 'текст', 'text'])
+    col_diff     = _col(['kynç', 'diff', 'тип', 'тяж', 'type', 'сложн'])
+    col_correct  = _col(['dogry', 'correct', 'jogap', 'ответ', 'answer'])
+    col_opts     = {k: _col_exact([k, f'{k})']) for k in OPTION_KEYS}
+
+    missing = []
+    if col_subject is None:  missing.append('Ders')
+    if col_text is None:     missing.append('Sorag')
+    if col_diff is None:     missing.append('Kynçylyk')
+    if col_correct is None:  missing.append('Dogry jogap')
+    if col_opts['a'] is None: missing.append('A')
+    if col_opts['b'] is None: missing.append('B')
+    if missing:
+        return None, f'Sütünler tapylmady: {", ".join(missing)}. Birinji setirde at barmy barlaň.'
+
+    def _cell(row, idx):
+        if idx is None or idx >= len(row):
+            return ''
+        v = row[idx]
+        return str(v).strip() if v is not None else ''
+
+    records = []
+    for row_num, row in enumerate(rows[1:], 2):
+        if not any(c for c in row if c is not None and str(c).strip()):
+            continue
+
+        subject_name = _cell(row, col_subject)
+        question_text = _cell(row, col_text) or None
+        diff_raw = _cell(row, col_diff).lower()
+        correct_raw = _cell(row, col_correct)
+
+        if not subject_name:
+            records.append({'ok': False, 'row_num': row_num, 'error': 'ders ady boş'})
+            continue
+
+        difficulty = _difficulty_map_lookup(diff_raw)
+        if difficulty is None:
+            records.append({'ok': False, 'row_num': row_num, 'error': f'nämälim kynçylyk «{diff_raw}»'})
+            continue
+
+        correct_keys = [k.strip().lower() for k in correct_raw.replace(',', ' ').split() if k.strip()]
+        correct_keys = [k for k in correct_keys if k in OPTION_KEYS]
+        if not correct_keys:
+            records.append({'ok': False, 'row_num': row_num, 'error': f'dogry jogap ýok ýa-da nädogry «{correct_raw}»'})
+            continue
+
+        options = {}
+        for k in OPTION_KEYS:
+            txt = _cell(row, col_opts[k]) if col_opts[k] is not None else ''
+            options[k] = txt or None
+
+        records.append({
+            'ok': True,
+            'row_num': row_num,
+            'subject_name': subject_name,
+            'question_text': question_text,
+            'difficulty': difficulty,
+            'correct_keys': correct_keys,
+            'options': options,
+        })
+
+    return records, None
+
+
+def _difficulty_map_lookup(raw: str) -> str | None:
+    for key, val in _DIFFICULTY_MAP.items():
+        if key in raw:
+            return val
+    return None
+
+
+@questions_bp.route('/import', methods=['POST'])
+@login_required
+def import_excel():
+    file = request.files.get('file')
+    if not file or file.filename == '':
+        flash('Faýl saýlaň', 'danger')
+        return redirect(url_for('questions.index'))
+
+    if not file.filename.lower().endswith(('.xlsx', '.xls')):
+        flash('Diňe .xlsx we .xls faýllar goldanylýar', 'danger')
+        return redirect(url_for('questions.index'))
+
+    records, error = _parse_questions_excel(file.read())
+    if error:
+        flash(f'Import ýalňyşlygy: {error}', 'danger')
+        return redirect(url_for('questions.index'))
+
+    db = get_db_connection()
+    subjects_cache = {}
+    imported = 0
+    errors = []
+
+    for rec in records:
+        if not rec['ok']:
+            errors.append(f"Setir {rec['row_num']}: {rec['error']}")
+            continue
+
+        sname = rec['subject_name']
+        if sname not in subjects_cache:
+            row = db.execute(
+                'SELECT id, answer_count FROM subjects WHERE lower(name) = lower(?)', (sname,)
+            ).fetchone()
+            subjects_cache[sname] = dict(row) if row else None
+
+        n = rec['row_num']
+
+        subject = subjects_cache[sname]
+        if subject is None:
+            errors.append(f'Setir {n}: ders tapylmady «{sname}»')
+            continue
+
+        answer_count = subject['answer_count']
+        active_keys = OPTION_KEYS[:answer_count]
+
+        valid_correct = [k for k in rec['correct_keys'] if k in active_keys]
+        if not valid_correct:
+            errors.append(
+                f'Setir {n}: «{sname}» üçin dogry jogap {[k.upper() for k in active_keys]} '
+                f'içinde bolmaly, alnan: {[k.upper() for k in rec["correct_keys"]]}'
+            )
+            continue
+
+        missing_opts = [k for k in active_keys if not rec['options'].get(k)]
+        if missing_opts:
+            errors.append(
+                f'Setir {n}: {[k.upper() for k in missing_opts]} wariantlary boş '
+                f'(«{sname}» üçin {answer_count} wariant gerek)'
+            )
+            continue
+
+        if rec['question_text']:
+            exists = db.execute(
+                'SELECT id FROM questions WHERE subject_id = ? AND question_text = ?',
+                (subject['id'], rec['question_text']),
+            ).fetchone()
+            if exists:
+                errors.append(f"Setir {n}: bu sorag eýýäm bar (ID {exists['id']}), geçildi")
+                continue
+
+        correct_str = ','.join(sorted(valid_correct))
+        try:
+            cursor = db.cursor()
+            cursor.execute(
+                'INSERT INTO questions (subject_id, question_text, correct_option, difficulty) VALUES (?, ?, ?, ?)',
+                (subject['id'], rec['question_text'], correct_str, rec['difficulty']),
+            )
+            qid = cursor.lastrowid
+            for k in active_keys:
+                cursor.execute(
+                    'INSERT INTO question_options (question_id, option_key, option_text) VALUES (?, ?, ?)',
+                    (qid, k, rec['options'].get(k)),
+                )
+            db.commit()
+            imported += 1
+        except Exception as e:
+            db.rollback()
+            errors.append(f'Setir {n}: DB ýalňyşlygy: {e}')
+
+    db.close()
+
+    if imported:
+        flash(f'{imported} sorag import edildi', 'success')
+    for e in errors:
+        flash(e, 'warning')
+
+    return redirect(url_for('questions.index'))
 
 
 @questions_bp.route('/')
@@ -350,10 +569,12 @@ def edit(id: int):
 
         new_question_image_path = None
         if has_new_question_image:
+            _delete_image(question['question_image'])
             new_question_image_path = _save_image(question_image_file, os.path.join('uploads', 'questions'))
 
         for k in active_keys:
             if new_option_files[k] and new_option_files[k].filename:
+                _delete_image(options[k].get('option_image'))
                 final_option_image_paths[k] = _save_image(new_option_files[k], os.path.join('uploads', 'questions'))
 
         correct_option_str = ','.join(sorted(correct_options_raw))
@@ -364,7 +585,6 @@ def edit(id: int):
                 (subject_id, question_text, new_question_image_path or question['question_image'], correct_option_str, difficulty, id),
             )
 
-            # Remove options that are no longer active (subject changed to fewer options)
             placeholders = ','.join('?' for _ in active_keys)
             db.execute(
                 f'DELETE FROM question_options WHERE question_id=? AND option_key NOT IN ({placeholders})',
@@ -401,6 +621,37 @@ def edit(id: int):
         {'question_text': '', 'correct_options_list': correct_options_list, 'difficulty': question['difficulty']},
         question['subject_id'],
     )
+
+
+@questions_bp.route('/delete/<int:id>', methods=['POST'])
+@login_required
+def delete(id: int):
+    db = get_db_connection()
+    question = db.execute('SELECT question_image FROM questions WHERE id = ?', (id,)).fetchone()
+    if not question:
+        db.close()
+        flash('Sorag tapylmady', 'danger')
+        return redirect(url_for('questions.index'))
+
+    used = db.execute(
+        'SELECT COUNT(*) FROM test_instance_questions WHERE question_id = ?', (id,)
+    ).fetchone()[0]
+    if used:
+        db.close()
+        flash(f'Soragy ýok etmek mümkin däl — ol {used} test nusgasynda ulanylýar', 'danger')
+        return redirect(url_for('questions.index'))
+
+    opt_images = db.execute(
+        'SELECT option_image FROM question_options WHERE question_id = ?', (id,)
+    ).fetchall()
+    db.execute('DELETE FROM questions WHERE id = ?', (id,))
+    db.commit()
+    _delete_image(question['question_image'])
+    for opt in opt_images:
+        _delete_image(opt['option_image'])
+    db.close()
+    flash('Sorag ýok edildi', 'info')
+    return redirect(url_for('questions.index'))
 
 
 @questions_bp.route('/toggle/<int:id>', methods=['POST'])

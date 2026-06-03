@@ -8,7 +8,6 @@ subjects_bp = Blueprint('subjects', __name__)
 @login_required
 def index():
     db = get_db_connection()
-    # Получаем все предметы, чтобы видеть и активные, и заблокированные
     subjects = db.execute('SELECT * FROM subjects ORDER BY name ASC').fetchall()
     db.close()
     return render_template('subjects/list.html', subjects=subjects)
@@ -30,7 +29,7 @@ def create():
                 db.commit()
                 flash(f"Ders '{name}' goşulan", "success")
                 return redirect(url_for('subjects.index'))
-            except:
+            except Exception:
                 flash("Bu ders eýýäm bar", "danger")
             finally:
                 db.close()
@@ -58,7 +57,6 @@ def edit(id):
 @login_required
 def toggle(id):
     db = get_db_connection()
-    # Меняем значение на противоположное (1 - 0 = 1, 1 - 1 = 0)
     db.execute('UPDATE subjects SET is_active = 1 - is_active WHERE id = ?', (id,))
     db.commit()
     db.close()

@@ -87,8 +87,10 @@ CREATE TABLE IF NOT EXISTS test_subjects (
 CREATE TABLE IF NOT EXISTS test_instances (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     test_id INTEGER NOT NULL,
+    parent_instance_id INTEGER DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
-    FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE
+    FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_instance_id) REFERENCES test_instances(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS test_instance_questions (

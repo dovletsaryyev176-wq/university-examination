@@ -40,14 +40,7 @@ def _find_font(bold=False):
     return next((p for p in candidates if os.path.exists(p)), None)
 
 
-# ─── Algorithm ────────────────────────────────────────────────────────────────
-
 def _arrange_no_adjacent(students: list) -> list:
-    """
-    Greedy max-heap: always place the most frequent remaining region
-    that differs from the previous seat. Minimises same-region adjacency.
-    When one region dominates (> 50 % of seats) some conflicts are unavoidable.
-    """
     if not students:
         return []
 
@@ -55,7 +48,6 @@ def _arrange_no_adjacent(students: list) -> list:
     for s in students:
         buckets[s['region']].append(s)
 
-    # (-count, region_name) — region_name used as stable tiebreaker
     heap = [(-len(lst), region) for region, lst in buckets.items()]
     heapq.heapify(heap)
 
@@ -65,7 +57,6 @@ def _arrange_no_adjacent(students: list) -> list:
         neg, region = heapq.heappop(heap)
 
         if result and result[-1]['region'] == region and heap:
-            # Same as previous — swap with next most frequent
             neg2, region2 = heapq.heappop(heap)
             result.append(buckets[region2].pop())
             if buckets[region2]:
@@ -86,10 +77,7 @@ def _count_conflicts(students: list) -> int:
     )
 
 
-# ─── PDF ──────────────────────────────────────────────────────────────────────
-
 def _generate_pdf(session_name: str, classrooms_data: list) -> bytes:
-    """classrooms_data: [{'classroom': {...}, 'students': [...]}]"""
     from fpdf import FPDF
 
     pdf = FPDF()
@@ -113,7 +101,6 @@ def _generate_pdf(session_name: str, classrooms_data: list) -> bytes:
 
         pdf.add_page()
 
-        # Header
         pdf.set_font(font_name, 'B', 16)
         pdf.cell(0, 10, text=session_name, align='C', new_x='LMARGIN', new_y='NEXT')
 
@@ -132,7 +119,6 @@ def _generate_pdf(session_name: str, classrooms_data: list) -> bytes:
         pdf.set_text_color(0, 0, 0)
         pdf.ln(5)
 
-        # Table header
         COL_W = [12, 20, 95, 60]
         HDRS  = ['№', 'Belgisi', 'F.A.A.', 'Welaýat']
         pdf.set_font(font_name, 'B', 10)
@@ -180,8 +166,6 @@ def _generate_pdf(session_name: str, classrooms_data: list) -> bytes:
 
     return bytes(pdf.output())
 
-
-# ─── Routes ───────────────────────────────────────────────────────────────────
 
 @exam_bp.route('/')
 @login_required
@@ -249,11 +233,9 @@ def create():
                 form_name=name,
             )
 
-        # Load students and arrange
         students = [dict(s) for s in db.execute('SELECT * FROM students').fetchall()]
         arranged = _arrange_no_adjacent(students)
 
-        # Assign to classrooms sequentially
         placements = []
         idx = 0
         for room in selected_rooms:
@@ -347,6 +329,98 @@ def detail(id: int):
     )
 
 
+def _load_regions_data(db, session_id: int) -> list:
+    rows = db.execute(
+        '''
+        SELECT c.name AS classroom_name,
+               s.last_name, s.first_name, s.patronymic, s.region
+        FROM exam_placements ep
+        JOIN classrooms c ON c.id = ep.classroom_id
+        JOIN students s ON s.id = ep.student_id
+        WHERE ep.session_id = ?
+        ORDER BY s.region, s.last_name, s.first_name
+        ''',
+        (session_id,),
+    ).fetchall()
+
+    regions_map: dict = {}
+    for row in rows:
+        region = row['region'] or 'Näbelli'
+        if region not in regions_map:
+            regions_map[region] = []
+        regions_map[region].append(dict(row))
+
+    return [{'region': r, 'students': regions_map[r]} for r in sorted(regions_map)]
+
+
+def _generate_pdf2(session_name: str, regions_data: list) -> bytes:
+    from fpdf import FPDF
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+
+    font_name = 'Helvetica'
+    reg = _find_font(bold=False)
+    bld = _find_font(bold=True)
+    if reg:
+        try:
+            pdf.add_font('Arial', '', reg)
+            pdf.add_font('Arial', 'B', bld or reg)
+            font_name = 'Arial'
+        except Exception:
+            pass
+
+    COL_W = [12, 55, 45, 45, 33]
+    HDRS  = ['№', 'Familiýasy', 'Ady', 'Atasynyň ady', 'Synp']
+
+    for region_data in regions_data:
+        region = region_data['region']
+        sts = region_data['students']
+
+        pdf.add_page()
+
+        pdf.set_font(font_name, 'B', 16)
+        pdf.cell(0, 10, text=session_name, align='C', new_x='LMARGIN', new_y='NEXT')
+
+        pdf.set_font(font_name, 'B', 13)
+        pdf.cell(0, 8, text=region, align='C', new_x='LMARGIN', new_y='NEXT')
+
+        pdf.set_font(font_name, '', 10)
+        pdf.set_text_color(100, 100, 100)
+        pdf.cell(
+            0, 6,
+            text=f'Dalaşgär sany: {len(sts)}',
+            align='C', new_x='LMARGIN', new_y='NEXT',
+        )
+        pdf.set_text_color(0, 0, 0)
+        pdf.ln(5)
+
+        pdf.set_font(font_name, 'B', 10)
+        pdf.set_fill_color(60, 120, 200)
+        pdf.set_text_color(255, 255, 255)
+        for w, h in zip(COL_W, HDRS):
+            pdf.cell(w, 8, text=h, border=1, fill=True, align='C')
+        pdf.ln()
+        pdf.set_text_color(0, 0, 0)
+
+        pdf.set_font(font_name, '', 9)
+        for i, s in enumerate(sts, 1):
+            pdf.set_fill_color(240, 245, 255) if i % 2 == 0 else pdf.set_fill_color(255, 255, 255)
+            row_vals = [
+                str(i),
+                s.get('last_name') or '',
+                s.get('first_name') or '',
+                s.get('patronymic') or '',
+                s.get('classroom_name') or '',
+            ]
+            for w, val in zip(COL_W, row_vals):
+                pdf.cell(w, 7, text=val, border=1, fill=True,
+                         align='C' if w <= 12 else 'L')
+            pdf.ln()
+
+    return bytes(pdf.output())
+
+
 @exam_bp.route('/<int:id>/pdf')
 @login_required
 def export_pdf(id: int):
@@ -360,10 +434,6 @@ def export_pdf(id: int):
     classrooms_data = _load_classrooms_data(db, id)
     db.close()
 
-    # Rename keys for PDF helper
-    for rd in classrooms_data:
-        rd['classroom']['name'] = rd['classroom']['name']
-
     pdf_bytes = _generate_pdf(session['name'], classrooms_data)
     safe = ''.join(c if c.isalnum() or c in ' _-' else '_' for c in session['name'])
     return send_file(
@@ -371,6 +441,29 @@ def export_pdf(id: int):
         mimetype='application/pdf',
         as_attachment=True,
         download_name=f'{safe}.pdf',
+    )
+
+
+@exam_bp.route('/<int:id>/pdf2')
+@login_required
+def export_pdf2(id: int):
+    db = get_db_connection()
+    session = db.execute('SELECT * FROM exam_sessions WHERE id = ?', (id,)).fetchone()
+    if not session:
+        db.close()
+        flash('Ýerleşdirme tapylmady', 'danger')
+        return redirect(url_for('exam.index'))
+
+    regions_data = _load_regions_data(db, id)
+    db.close()
+
+    pdf_bytes = _generate_pdf2(session['name'], regions_data)
+    safe = ''.join(c if c.isalnum() or c in ' _-' else '_' for c in session['name'])
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'{safe}_welaýatlar.pdf',
     )
 
 

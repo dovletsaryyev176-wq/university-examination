@@ -8,7 +8,6 @@ from database import get_db_connection
 
 students_bp = Blueprint('students', __name__)
 
-# Keywords for flexible header detection
 _HEADER_KEYS = {
     'number':     ['номер', 'number', '№', 'num', 'код', 'id'],
     'last_name':  ['фамилия', 'lastname', 'last_name', 'surname'],
@@ -44,8 +43,6 @@ def _parse_excel(file_bytes: bytes):
 
     col = {k: _detect_col(first_row, k) for k in _HEADER_KEYS}
 
-    # If key columns not found by header, assume fixed order (no header row):
-    # col A=number, B=last_name, C=first_name, D=patronymic, E=region
     if col['last_name'] is None and col['first_name'] is None:
         col = {'number': 0, 'last_name': 1, 'first_name': 2, 'patronymic': 3, 'region': 4}
         data_rows = rows

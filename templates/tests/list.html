@@ -37,13 +37,16 @@
                     </td>
                     <td class="text-center text-muted">{{ t.subject_count }}</td>
                     <td class="text-end">
-                        <a href="{{ url_for('tests.export_pdf', id=t.id) }}"
-                           class="btn btn-sm btn-outline-secondary me-1" title="PDF ýüklemek">
-                            ⬇ PDF
-                        </a>
+                        <form action="{{ url_for('tests.save_instance', id=t.id) }}" method="POST"
+                              class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-success me-1"
+                                    title="Täze nusga ýatda saklamak">
+                                + Nusga
+                            </button>
+                        </form>
                         <a href="{{ url_for('tests.instances', test_id=t.id) }}"
-                           class="btn btn-sm btn-outline-info me-1" title="Ýatda saklanan jogaplar">
-                            Jogaplar
+                           class="btn btn-sm btn-outline-info me-1" title="Ýatda saklanan nusgalar">
+                            Nusgalar
                         </a>
                         <a href="{{ url_for('tests.edit', id=t.id) }}"
                            class="btn btn-sm btn-outline-primary me-1">Üýtgetmek</a>

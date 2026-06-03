@@ -3,10 +3,8 @@ from flask_login import login_required
 from werkzeug.security import generate_password_hash
 from database import get_db_connection
 
-# Инициализируем Blueprint для работы в составе app.py
 users_bp = Blueprint('users', __name__)
 
-# --- READ: Список всех пользователей ---
 @users_bp.route('/')
 @login_required
 def index():
@@ -15,14 +13,19 @@ def index():
     db.close()
     return render_template('users/list.html', users=users)
 
-# --- CREATE: Создание нового пользователя ---
 @users_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create():
     if request.method == 'POST':
-        full_name = request.form['full_name']
-        username = request.form['username']
-        password = generate_password_hash(request.form['password'])
+        full_name = request.form.get('full_name', '').strip()
+        username = request.form.get('username', '').strip()
+        password_raw = request.form.get('password', '')
+
+        if not full_name or not username or not password_raw:
+            flash("Ähli meýdançalary dolduryň")
+            return render_template('users/form.html', user=None)
+
+        password = generate_password_hash(password_raw)
 
         db = get_db_connection()
         try:
@@ -31,14 +34,13 @@ def create():
             db.commit()
             flash(f"Ulanyjy {username} döredilen")
             return redirect(url_for('users.index'))
-        except:
+        except Exception:
             flash("Ýalňyş: bu ulanyjy eýýäm bar")
         finally:
             db.close()
             
     return render_template('users/form.html', user=None)
 
-# --- UPDATE: Редактирование данных ---
 @users_bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit(id):
@@ -46,11 +48,10 @@ def edit(id):
     user = db.execute('SELECT * FROM users WHERE id = ?', (id,)).fetchone()
 
     if request.method == 'POST':
-        full_name = request.form['full_name']
-        username = request.form['username']
-        password_raw = request.form['password']
-        
-        # Если пароль ввели, хешируем и обновляем. Если пусто — оставляем старый.
+        full_name = request.form.get('full_name', '').strip()
+        username = request.form.get('username', '').strip()
+        password_raw = request.form.get('password', '')
+
         if password_raw:
             hashed_pw = generate_password_hash(password_raw)
             db.execute('UPDATE users SET full_name = ?, username = ?, password = ? WHERE id = ?',
@@ -71,7 +72,6 @@ def edit(id):
         
     return render_template('users/form.html', user=user)
 
-# --- DELETE: Удаление (только через POST) ---
 @users_bp.route('/delete/<int:id>', methods=['POST'])
 @login_required
 def delete(id):
