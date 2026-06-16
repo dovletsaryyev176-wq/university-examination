@@ -14,7 +14,7 @@
                class="btn btn-outline-secondary btn-sm">⬇ PDF</a>
             {% if is_base and not has_variant %}
             <form action="{{ url_for('tests.create_variant', instance_id=instance.id) }}" method="POST" class="d-inline">
-                <button type="submit" class="btn btn-outline-primary btn-sm">+ Görnüş</button>
+                <button type="submit" class="btn btn-outline-primary btn-sm">+ Kitapça B</button>
             </form>
             {% endif %}
             <a href="{{ url_for('tests.instances', test_id=instance.test_id) }}"

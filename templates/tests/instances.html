@@ -10,7 +10,7 @@
         <div class="d-flex gap-2">
             {% if not has_instance %}
             <form action="{{ url_for('tests.save_instance', id=test.id) }}" method="POST" class="d-inline">
-                <button type="submit" class="btn btn-outline-success btn-sm">+ Nusga</button>
+                <button type="submit" class="btn btn-outline-success btn-sm">+ Kitapça A</button>
             </form>
             {% endif %}
             <a href="{{ url_for('tests.index') }}" class="btn btn-link text-secondary btn-sm">← Yza</a>
@@ -34,9 +34,9 @@
                     <td class="text-muted">{{ inst.id }}</td>
                     <td>
                         {% if inst.parent_instance_id is none %}
-                        <span class="badge bg-primary">Nusga</span>
+                        <span class="badge bg-primary">Kitapça A</span>
                         {% else %}
-                        <span class="badge bg-secondary">Görnüş</span>
+                        <span class="badge bg-secondary">Kitapça B</span>
                         {% endif %}
                     </td>
                     <td>{{ inst.created_at }}</td>
@@ -56,7 +56,7 @@
                 {% else %}
                 <tr>
                     <td colspan="4" class="text-center py-4 text-muted">
-                        Ýatda saklanan ýok. «+ Nusga» düwmesini basyň.
+                        Ýatda saklanan ýok. «+ Kitapça A» düwmesini basyň.
                     </td>
                 </tr>
                 {% endfor %}

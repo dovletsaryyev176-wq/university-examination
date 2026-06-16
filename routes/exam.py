@@ -332,7 +332,7 @@ def detail(id: int):
 def _load_regions_data(db, session_id: int) -> list:
     rows = db.execute(
         '''
-        SELECT c.name AS classroom_name,
+        SELECT c.name AS classroom_name, c.location AS classroom_location,
                s.last_name, s.first_name, s.patronymic, s.region
         FROM exam_placements ep
         JOIN classrooms c ON c.id = ep.classroom_id
@@ -370,8 +370,8 @@ def _generate_pdf2(session_name: str, regions_data: list) -> bytes:
         except Exception:
             pass
 
-    COL_W = [12, 55, 45, 45, 33]
-    HDRS  = ['№', 'Familiýasy', 'Ady', 'Atasynyň ady', 'Synp']
+    COL_W = [12, 55, 45, 45, 33, 45]
+    HDRS  = ['№', 'Familiýasy', 'Ady', 'Atasynyň ady', 'Synp', 'Ýerleşýän ýeri']
 
     for region_data in regions_data:
         region = region_data['region']
@@ -412,6 +412,7 @@ def _generate_pdf2(session_name: str, regions_data: list) -> bytes:
                 s.get('first_name') or '',
                 s.get('patronymic') or '',
                 s.get('classroom_name') or '',
+                s.get('classroom_location') or '',
             ]
             for w, val in zip(COL_W, row_vals):
                 pdf.cell(w, 7, text=val, border=1, fill=True,

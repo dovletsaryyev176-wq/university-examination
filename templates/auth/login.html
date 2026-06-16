@@ -1,21 +1,50 @@
 {% extends 'base.html' %}
+
+{% block head_extra %}
+<style>
+    .login-wrapper {
+        min-height: calc(100vh - 56px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+
+    .login-card {
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.1);
+        padding: 2.5rem 2rem;
+        width: 100%;
+        max-width: 420px;
+    }
+
+    .login-logo {
+        width: 110px;
+        height: 110px;
+        object-fit: contain;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-4">
-        <div class="main-card">
-            <h3 class="text-center mb-4">Ulgama girmek</h3>
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Ulanyjy ady</label>
-                    <input type="text" name="username" class="form-control" required autofocus>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Gizlin belgisi</label>
-                    <input type="password" name="password" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100">Ulgama girmek</button>
-            </form>
+<div class="login-wrapper">
+    <div class="login-card">
+        <h3 class="text-center mb-3">Ulgama girmek</h3>
+        <div class="text-center mb-4">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="HSTU Logo" class="login-logo">
         </div>
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Ulanyjy ady</label>
+                <input type="text" name="username" class="form-control" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Gizlin belgisi</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Ulgama girmek</button>
+        </form>
     </div>
 </div>
 {% endblock %}
